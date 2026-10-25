@@ -1,0 +1,15 @@
+{
+  "estaciones": [
+    { "id": "ejemplo", "nombre": "Ejemplo", "cabecera": "EJEMPLO, EST.", "ciudad": "Ciudad de Ejemplo, Estado" }
+  ],
+  "personal": ["Persona Uno", "Persona Dos", "Persona Tres"],
+  "responsable": {
+    "personal": "Persona Uno",
+    "nombre_portada": "NOMBRE COMPLETO DEL RESPONSABLE",
+    "nombre_firma": "Ing. Nombre Completo del Responsable",
+    "telefono": "0000000000",
+    "correo": "CORREO@EJEMPLO.COM"
+  },
+  "autoriza": { "nombre": "Ing. Nombre de Quien Autoriza", "area": "Área de quien autoriza" },
+  "vobo": { "nombre": "Ing. Nombre del Visto Bueno", "area": "Área del visto bueno" }
+}

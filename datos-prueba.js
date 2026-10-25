@@ -5,7 +5,7 @@ function datosPrueba(F) {
     nombre: 'NOMBRE DE PRUEBA', colabora: 'COLABORADOR DE PRUEBA', telefono: '0000000000', correo: 'PRUEBA@EJEMPLO.COM',
     intro: { parrafos: [
       'Este es un reporte de prueba generado desde la app. Sirve para comprobar que la plantilla, las fotos y las tablas se arman correctamente en el celular.',
-      'Todos los nombres, teléfonos y fotos de este documento son ficticios.'],
+      'Las fotos y el texto del procedimiento de este borrador son de ejemplo.'],
       fotos: [{ foto: F.placa20, pie: 'Foto de ejemplo uno' }, { foto: F.placa23, pie: 'Foto de ejemplo dos' }] },
     materiales: ['Desarmador', 'Llave ajustable (inglesa)', 'Termómetro', 'Amperímetro de gancho', 'Multímetro', 'Sopladora', 'Guantes aislantes'],
     responsables: ['Persona de prueba uno', 'Persona de prueba dos'],

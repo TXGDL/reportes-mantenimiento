@@ -9,31 +9,83 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
+  *{box-sizing:border-box}
   body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:0;background:#f5f5f5;color:#222}
-  header{background:#9d2449;color:#fff;padding:16px}
-  header h1{margin:0;font-size:1.2rem} header p{margin:4px 0 0;font-size:.85rem;opacity:.9}
+  header{background:#9d2449;color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  header h1{margin:0;font-size:1.1rem} header small{display:block;opacity:.9;font-size:.78rem;margin-top:2px}
+  #btnCambiar{width:auto;margin:0;padding:8px 12px;font-size:.85rem;background:rgba(255,255,255,.2)}
   main{max-width:520px;margin:0 auto;padding:16px}
   .card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.12)}
-  button{width:100%;font-size:1.05rem;padding:14px;border:0;border-radius:10px;background:#9d2449;color:#fff;margin-top:12px}
+  h2{margin:0 0 8px;font-size:1.15rem}
+  label{display:block;margin:14px 0 4px;font-weight:600;font-size:.92rem}
+  select,input[type=text],input[type=date],input[type=time],input[type=number]{width:100%;font-size:1.05rem;padding:11px;border:1px solid #bbb;border-radius:8px;background:#fff}
+  .fila{display:flex;gap:10px}.fila>div{flex:1}
+  .chk{display:flex;align-items:center;gap:10px;margin:8px 0;font-weight:400;font-size:1rem}
+  .chk input{width:22px;height:22px}
+  button{width:100%;font-size:1.05rem;padding:14px;border:0;border-radius:10px;background:#9d2449;color:#fff;margin-top:16px}
+  button.sec{background:#e4e4e4;color:#333}
   button:disabled{opacity:.5}
-  #estado{margin-top:12px;font-size:.95rem;min-height:1.4em}
+  .aviso{font-size:.85rem;color:#555;margin-top:6px}.error{color:#b00020;font-size:.9rem;margin-top:10px;min-height:1.2em}
+  dl{margin:8px 0}dt{font-size:.78rem;color:#666;margin-top:10px}dd{margin:2px 0 0;font-size:1rem}
+  [hidden]{display:none!important}
 </style>
 </head>
 <body>
-<header><h1>Reportes de mantenimiento</h1><p>Versión de prueba 0.2</p></header>
+<header>
+  <div><h1>Reportes de mantenimiento</h1><small id="subtitulo">Versión de prueba 0.3</small></div>
+  <button id="btnCambiar" class="sec" hidden>Cambiar</button>
+</header>
 <main>
-  <div class="card">
-    <p>Esta versión solo comprueba que el celular puede armar un reporte completo a partir de la plantilla. Usa datos y fotos ficticios.</p>
-    <button id="btnGenerar">Generar reporte de prueba</button>
-    <div id="estado"></div>
-    <button id="btnDescargar" hidden>Descargar reporte</button>
-  </div>
+  <section id="pConfig" class="card" hidden>
+    <h2>Primer uso en este celular</h2>
+    <p>Carga el archivo de configuración (<b>config-privada.json</b>) que te pasó quien administra la app. Se guarda solo en este celular.</p>
+    <label for="archivoConfig">Archivo de configuración</label>
+    <input id="archivoConfig" type="file" accept=".json,application/json">
+    <div id="errConfig" class="error"></div>
+  </section>
+
+  <section id="pInicio" class="card" hidden>
+    <h2>¿Quién eres?</h2>
+    <label for="selUsuario">Tu nombre</label><select id="selUsuario"></select>
+    <label for="selEstacion">Oficina de Estación</label><select id="selEstacion"></select>
+    <div id="errInicio" class="error"></div>
+    <button id="btnInicio">Continuar</button>
+  </section>
+
+  <section id="pReporte" class="card" hidden>
+    <h2>Nuevo reporte</h2>
+    <label for="selAnexo">Mantenimiento (anexo del manual)</label><select id="selAnexo"></select>
+    <div class="fila">
+      <div><label for="inNumero">No. de mantenimiento</label><input id="inNumero" type="number" inputmode="numeric" min="0"></div>
+      <div><label for="inFecha">Fecha</label><input id="inFecha" type="date"></div>
+    </div>
+    <div class="fila">
+      <div><label for="inHoraIni">Hora de inicio</label><input id="inHoraIni" type="time"></div>
+      <div><label for="inHoraFin">Hora de término</label><input id="inHoraFin" type="time"></div>
+    </div>
+    <label>¿Quiénes realizaron el mantenimiento?</label>
+    <div id="listaPersonas"></div>
+    <div class="aviso" id="avisoResp"></div>
+    <div id="errReporte" class="error"></div>
+    <button id="btnResumen">Ver resumen</button>
+  </section>
+
+  <section id="pResumen" class="card" hidden>
+    <h2>Resumen del reporte</h2>
+    <dl id="datosResumen"></dl>
+    <p class="aviso">En esta versión, las fotos y el texto del procedimiento son de ejemplo. Lo demás sale con tus datos reales.</p>
+    <div id="estado" class="aviso"></div>
+    <button id="btnGenerar">Generar borrador de prueba</button>
+    <button id="btnDescargar" hidden>Descargar borrador</button>
+    <button id="btnVolver" class="sec">Volver a editar</button>
+  </section>
 </main>
 <script src="lib/pizzip.min.js"></script>
 <script src="lib/docxtemplater.min.js"></script>
 <script src="lib/imagemodule.js"></script>
 <script src="motor.js"></script>
 <script src="datos-prueba.js"></script>
+<script src="catalogo.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
