@@ -19,8 +19,7 @@ $('btnGenerar').addEventListener('click', async () => {
     const F = {
       placa20: await fotoFalsa('FOTO 1', 1600, 1200, '#46709f'), placa23: await fotoFalsa('FOTO 2', 1600, 1200, '#5a8264'),
       tapa: await fotoFalsa('FOTO VERTICAL', 1200, 1600, '#96645a'), insp: await fotoFalsa('FOTO 3', 1600, 1200, '#78598c'),
-      temp: await fotoFalsa('FOTO 4', 1600, 1200, '#aa5050'), solicitud: await fotoFalsa('SOLICITUD (EJEMPLO)', 1240, 1500, '#c8c8c8'),
-      firma: await fotoFalsa('FIRMA', 600, 200, '#999999')
+      temp: await fotoFalsa('FOTO 4', 1600, 1200, '#aa5050'), solicitud: await fotoFalsa('SOLICITUD (EJEMPLO)', 1240, 1500, '#c8c8c8')
     };
     $('estado').textContent = 'Armando el reporte…';
     const resp = await fetch('plantilla/plantilla_maestra_reporte.docx');

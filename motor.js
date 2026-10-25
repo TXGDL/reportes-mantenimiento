@@ -2,7 +2,7 @@
 (function (root) {
   const MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const MC  = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  const MAXW = { solicitud: [15, 17], firma: [5, 2] };
+  const MAXW = { solicitud: [15, 17] };
 
   // Reparte la altura libre de la página 2 entre las fotos de la introducción
   function limitesIntro(d, LIM, id) {
@@ -20,7 +20,7 @@
     let ilu = 0, tab = 0;
     const foto = b => ({ es_foto: true, imagen: id(b.foto), leyenda: `Ilustración ${++ilu} ${b.pie} (${corta})` });
     return Object.assign({}, d, {
-      solicitud: d.solicitud ? id(d.solicitud) : undefined, firma: d.firma ? id(d.firma) : undefined,
+      solicitud: d.solicitud ? id(d.solicitud) : undefined,
       fecha_larga: `${f.getDate()} de ${MES[f.getMonth()]} de ${f.getFullYear()}`,
       intro_parrafos: d.intro.parrafos.map(t => ({ texto: t })),
       intro_fotos: d.intro.fotos.map(foto),

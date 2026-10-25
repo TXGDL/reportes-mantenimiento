@@ -19,7 +19,7 @@ function datosPrueba(F) {
         { tabla: { etiqueta: 'Voltaje', terminales: ['H1 – H2','H2 – H3','H3 – H1'], valores: ['211.6 V','212.8 V','212.4 V'] }, pie: 'Voltajes de ejemplo' }] }],
     observaciones: 'Mantenimiento realizado sin observaciones', hora_inicio: '00:05 Hrs.', hora_fin: '01:13 Hrs.',
     conclusion: 'Texto de conclusión de ejemplo.',
-    solicitud: F.solicitud, firma: F.firma,
+    solicitud: F.solicitud,
     elabora_nombre: 'Nombre de prueba', elabora_area: 'Oficina de prueba',
     autoriza_nombre: 'Nombre de prueba', autoriza_area: 'Dirección de prueba',
     vobo_nombre: 'Nombre de prueba', vobo_area: 'Dirección de prueba'
