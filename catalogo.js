@@ -1,4 +1,5 @@
 // Catálogo de anexos del manual de mantenimiento preventivo. "disponible" = ya tiene su procedimiento armado en la app.
+const ANEXO_DEF = {};
 const ANEXOS = [
   { n: 10, titulo: 'Mantenimiento al transformador de aislamiento', disponible: true },
   { n: 11, titulo: 'Mantenimiento al regulador de voltaje' },

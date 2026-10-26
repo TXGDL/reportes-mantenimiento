@@ -14,23 +14,35 @@
   }
 
   // Convierte los datos "amigables" en los campos que usa la plantilla
-  function preparar(d, id) {
+  function preparar(d, id, LIM) {
     const f = new Date(d.fecha + 'T12:00:00');
     const corta = `${f.getDate()}/${MC[f.getMonth()]}/${String(f.getFullYear()).slice(2)}`;
     let ilu = 0, tab = 0;
-    const foto = b => ({ es_foto: true, imagen: id(b.foto), leyenda: `Ilustración ${++ilu} ${b.pie} (${corta})` });
+    const foto = b => ({ es_foto: true, con_leyenda: true, imagen: id(b.foto), leyenda: `Ilustración ${++ilu} ${b.pie} (${corta})` });
     return Object.assign({}, d, {
       solicitud: d.solicitud ? id(d.solicitud) : undefined,
       fecha_larga: `${f.getDate()} de ${MES[f.getMonth()]} de ${f.getFullYear()}`,
       intro_parrafos: d.intro.parrafos.map(t => ({ texto: t })),
       intro_fotos: d.intro.fotos.map(foto),
-      pasos: d.pasos.map(p => ({ titulo: p.titulo, bloques: p.bloques.map(b => {
-        if (b.texto) return { es_texto: true, texto: b.texto };
-        if (b.foto) return foto(b);
+      pasos: d.pasos.map(p => ({ titulo: p.titulo, bloques: p.bloques.flatMap(b => {
+        if (b.texto) return [{ es_texto: true, texto: b.texto }];
+        if (b.foto) return [foto(b)];
+        if (b.fotos) {                       // varias fotos con una sola leyenda, hasta 3 por fila
+          const fs = b.fotos.filter(Boolean), filas = [];
+          for (let i = 0; i < fs.length; i += 3) filas.push(fs.slice(i, i + 3));
+          return filas.map((r, i) => {
+            const ultima = i === filas.length - 1;
+            const o = { con_leyenda: ultima, leyenda: ultima ? `Ilustración ${++ilu} ${b.pie} (${corta})` : '' };
+            r.forEach(f => LIM.set(id(f), [5.0, 6.5]));
+            if (r.length === 1) { o.es_foto = true; o.imagen = id(r[0]); }
+            else { o[r.length === 2 ? 'es_fila2' : 'es_fila3'] = true; r.forEach((f, k) => o['f' + (k + 1)] = id(f)); }
+            return o;
+          });
+        }
         const t = b.tabla, n = t.terminales.length;
         const o = { ['es_tabla' + n]: true, etiqueta: t.etiqueta, leyenda: `Tabla ${++tab}. ${b.pie} (${corta})` };
         t.terminales.forEach((x, i) => { o['t' + (i + 1)] = x; o['v' + (i + 1)] = t.valores[i]; });
-        return o;
+        return [o];
       }) }))
     });
   }
@@ -51,7 +63,7 @@
       }
     });
     const doc = new root.docxtemplater(new root.PizZip(plantillaBuf), { paragraphLoop: true, linebreaks: true, modules: [im] });
-    doc.render(preparar(datos, id));
+    doc.render(preparar(datos, id, LIM));
     return doc.getZip().generate({ type: 'uint8array', compression: 'DEFLATE' });
   }
   root.Motor = { generar, preparar };

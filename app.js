@@ -7,11 +7,11 @@ const LS = {
 let config = LS.get('rm_config'), sesion = LS.get('rm_sesion') || {}, reporte = LS.get('rm_reporte') || {};
 let archivoListo = null, nombreArchivo = 'borrador.docx';
 
-const PANTALLAS = ['pConfig', 'pInicio', 'pReporte', 'pResumen'];
+const PANTALLAS = ['pConfig', 'pInicio', 'pReporte', 'pCaptura', 'pSeccion', 'pResumen'];
 function mostrar(id) {
   PANTALLAS.forEach(p => $(p).hidden = p !== id);
   const estacion = config && sesion.estacionId ? config.estaciones.find(e => e.id === sesion.estacionId) : null;
-  $('subtitulo').textContent = sesion.usuario && estacion ? `${sesion.usuario} · Oficina ${estacion.nombre}` : 'Versión de prueba 0.4';
+  $('subtitulo').textContent = sesion.usuario && estacion ? `${sesion.usuario} · Oficina ${estacion.nombre}` : 'Versión de prueba 0.5';
   $('btnCambiar').hidden = !(config && sesion.usuario);
   window.scrollTo(0, 0);
 }
@@ -95,15 +95,22 @@ $('btnResumen').addEventListener('click', () => {
   leerFormulario();
   const falta = !reporte.numero ? 'el número de mantenimiento' : !reporte.fecha ? 'la fecha' : !reporte.horaInicio ? 'la hora de inicio' : !reporte.horaFin ? 'la hora de término' : '';
   if (falta) { $('errReporte').textContent = 'Falta ' + falta + '.'; return; }
-  pantallaResumen();
+  pantallaCaptura();
 });
+$('btnNuevo').addEventListener('click', async () => {
+  if (!confirm('Se borrarán las fotos, lecturas y textos capturados de este reporte. ¿Empezar uno nuevo?')) return;
+  await Fotos.borrarTodas(); borrador = null; LS.del('rm_borrador'); reporte = { personas: reporte.personas || [] }; LS.set('rm_reporte', reporte); pantallaReporte();
+});
+$('btnIrResumen').addEventListener('click', pantallaResumen);
+$('btnVolverDatos').addEventListener('click', pantallaReporte);
+$('btnSeccionListo').addEventListener('click', pantallaCaptura);
 
 // ---------- Resumen y borrador ----------
-function armarDatos(F) {
+function encabezado() {
   const est = config.estaciones.find(e => e.id === sesion.estacionId), r = config.responsable;
   const anexo = ANEXOS.find(a => String(a.n) === reporte.anexo);
   const otros = reporte.personas.filter(p => p !== r.personal);
-  return Object.assign(datosPrueba(F), {
+  return {
     fecha: reporte.fecha, numero: reporte.numero, titulo: anexo.titulo.toUpperCase(),
     estacion_cabecera: est.cabecera, ciudad: est.ciudad,
     nombre: r.nombre_portada, colabora: otros.join(', ').toUpperCase(), telefono: r.telefono, correo: r.correo,
@@ -112,7 +119,7 @@ function armarDatos(F) {
     elabora_nombre: r.nombre_firma, elabora_area: 'Oficina de Estación ' + est.nombre,
     autoriza_nombre: config.autoriza.nombre, autoriza_area: config.autoriza.area,
     vobo_nombre: config.vobo.nombre, vobo_area: config.vobo.area
-  });
+  };
 }
 function pantallaResumen() {
   const est = config.estaciones.find(e => e.id === sesion.estacionId), r = config.responsable;
@@ -127,9 +134,11 @@ function pantallaResumen() {
     ['Autorizó', `${config.autoriza.nombre} — ${config.autoriza.area}`], ['Visto bueno', `${config.vobo.nombre} — ${config.vobo.area}`]
   ];
   $('datosResumen').innerHTML = ''; filas.forEach(([t, v]) => { const a = document.createElement('dt'); a.textContent = t; const b = document.createElement('dd'); b.textContent = v; $('datosResumen').append(a, b); });
+  asegurarBorrador(); const t = totales();
+  $('avanceResumen').textContent = `Fotos: ${t.f} de ${t.ft} · Lecturas: ${t.n} de ${t.nt}` + (t.f < t.ft || t.n < t.nt ? '. Lo que falte saldrá sin foto o con "—" en las tablas.' : '. Todo completo.');
   $('estado').textContent = ''; $('btnDescargar').hidden = true; archivoListo = null; mostrar('pResumen');
 }
-$('btnVolver').addEventListener('click', pantallaReporte);
+$('btnVolver').addEventListener('click', pantallaCaptura);
 
 function fotoFalsa(texto, w, h, color) {
   return new Promise(res => {
@@ -142,18 +151,15 @@ function fotoFalsa(texto, w, h, color) {
 $('btnGenerar').addEventListener('click', async () => {
   const btn = $('btnGenerar'); btn.disabled = true; $('btnDescargar').hidden = true;
   try {
-    $('estado').textContent = 'Armando el borrador…';
-    const F = {
-      placa20: await fotoFalsa('FOTO 1', 1600, 1200, '#46709f'), placa23: await fotoFalsa('FOTO 2', 1600, 1200, '#5a8264'),
-      tapa: await fotoFalsa('FOTO VERTICAL', 1200, 1600, '#96645a'), insp: await fotoFalsa('FOTO 3', 1600, 1200, '#78598c'),
-      temp: await fotoFalsa('FOTO 4', 1600, 1200, '#aa5050'), solicitud: await fotoFalsa('SOLICITUD (EJEMPLO)', 1240, 1500, '#c8c8c8')
-    };
+    $('estado').textContent = 'Armando el reporte…';
+    const cuerpo = await armarCuerpo();
+    if (!cuerpo.solicitud) cuerpo.solicitud = await fotoFalsa('SOLICITUD PENDIENTE DE AGREGAR', 1240, 1500, '#d8d8d8');
     const resp = await fetch('plantilla/plantilla_maestra_reporte.docx');
     if (!resp.ok) throw new Error('No se encontró la plantilla');
-    const salida = Motor.generar(await resp.arrayBuffer(), armarDatos(F));
+    const salida = Motor.generar(await resp.arrayBuffer(), Object.assign({}, encabezado(), cuerpo));
     archivoListo = new Blob([salida], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    nombreArchivo = `reporte_${reporte.numero}_anexo${reporte.anexo}_borrador.docx`;
-    $('estado').textContent = '¡Listo! El borrador se generó correctamente.'; $('btnDescargar').hidden = false;
+    nombreArchivo = `reporte_${reporte.numero}_anexo${reporte.anexo}.docx`;
+    $('estado').textContent = '¡Listo! El reporte se generó correctamente.'; $('btnDescargar').hidden = false;
   } catch (e) { console.error(e); $('estado').textContent = 'Algo falló: ' + (e.message || e); }
   btn.disabled = false;
 });
@@ -168,5 +174,6 @@ function iniciar() {
   if (!sesion.usuario || !sesion.estacionId) { pantallaInicio(); return; }
   pantallaReporte();
 }
+iniciarCaptura();
 iniciar();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
