@@ -32,16 +32,20 @@
 </head>
 <body>
 <header>
-  <div><h1>Reportes de mantenimiento</h1><small id="subtitulo">Versión de prueba 0.3</small></div>
+  <div><h1>Reportes de mantenimiento</h1><small id="subtitulo">Versión de prueba 0.4</small></div>
   <button id="btnCambiar" class="sec" hidden>Cambiar</button>
 </header>
 <main>
   <section id="pConfig" class="card" hidden>
-    <h2>Primer uso en este celular</h2>
-    <p>Carga el archivo de configuración (<b>config-privada.json</b>) que te pasó quien administra la app. Se guarda solo en este celular.</p>
-    <label for="archivoConfig">Archivo de configuración</label>
-    <input id="archivoConfig" type="file" accept=".json,application/json">
+    <h2>Conectar con Google Drive</h2>
+    <p>Inicia sesión con la cuenta de Google del trabajo para cargar la configuración desde Drive. Solo hace falta la primera vez en este celular.</p>
+    <button id="btnGoogle">Iniciar sesión con Google</button>
+    <div id="estadoConfig" class="aviso"></div>
     <div id="errConfig" class="error"></div>
+    <details style="margin-top:14px"><summary class="aviso">¿Sin internet? Cargar el archivo a mano</summary>
+      <label for="archivoConfig">Archivo config-privada.json</label>
+      <input id="archivoConfig" type="file" accept=".json,application/json">
+    </details>
   </section>
 
   <section id="pInicio" class="card" hidden>
@@ -50,6 +54,8 @@
     <label for="selEstacion">Oficina de Estación</label><select id="selEstacion"></select>
     <div id="errInicio" class="error"></div>
     <button id="btnInicio">Continuar</button>
+    <button id="btnActualizarConfig" class="sec">Actualizar configuración desde Drive</button>
+    <div id="estadoInicio" class="aviso"></div>
   </section>
 
   <section id="pReporte" class="card" hidden>
@@ -86,6 +92,9 @@
 <script src="motor.js"></script>
 <script src="datos-prueba.js"></script>
 <script src="catalogo.js"></script>
+<script src="drive.js"></script>
 <script src="app.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
 </body>
 </html>

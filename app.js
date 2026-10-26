@@ -11,7 +11,7 @@ const PANTALLAS = ['pConfig', 'pInicio', 'pReporte', 'pResumen'];
 function mostrar(id) {
   PANTALLAS.forEach(p => $(p).hidden = p !== id);
   const estacion = config && sesion.estacionId ? config.estaciones.find(e => e.id === sesion.estacionId) : null;
-  $('subtitulo').textContent = sesion.usuario && estacion ? `${sesion.usuario} · Oficina ${estacion.nombre}` : 'Versión de prueba 0.3';
+  $('subtitulo').textContent = sesion.usuario && estacion ? `${sesion.usuario} · Oficina ${estacion.nombre}` : 'Versión de prueba 0.4';
   $('btnCambiar').hidden = !(config && sesion.usuario);
   window.scrollTo(0, 0);
 }
@@ -30,6 +30,27 @@ $('archivoConfig').addEventListener('change', async e => {
     if (!configValida(c)) throw new Error('El archivo no tiene el formato esperado');
     config = c; LS.set('rm_config', c); $('errConfig').textContent = ''; iniciar();
   } catch (err) { $('errConfig').textContent = 'No se pudo leer la configuración: ' + err.message; }
+});
+
+// Carga desde Google Drive (primer uso y actualización)
+async function traerConfigDeDrive(salida) {
+  salida.textContent = 'Conectando con Google…';
+  try {
+    const r = await Drive.cargarConfig(LS.get('rm_config_fileid'));
+    if (!configValida(r.config)) throw new Error('El archivo de Drive no tiene el formato esperado.');
+    config = r.config; LS.set('rm_config', config); LS.set('rm_config_fileid', r.fileId);
+    salida.textContent = ''; return true;
+  } catch (e) { console.error(e); salida.textContent = ''; $('errConfig').textContent = e.message || String(e); $('estadoInicio').textContent = e.message || ''; return false; }
+}
+$('btnGoogle').addEventListener('click', async () => {
+  $('errConfig').textContent = ''; $('btnGoogle').disabled = true;
+  if (await traerConfigDeDrive($('estadoConfig'))) iniciar();
+  $('btnGoogle').disabled = false;
+});
+$('btnActualizarConfig').addEventListener('click', async () => {
+  $('btnActualizarConfig').disabled = true;
+  if (await traerConfigDeDrive($('estadoInicio'))) { $('estadoInicio').textContent = 'Configuración actualizada.'; pantallaInicio(); $('estadoInicio').textContent = 'Configuración actualizada.'; }
+  $('btnActualizarConfig').disabled = false;
 });
 
 // ---------- Identificación ----------
