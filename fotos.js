@@ -31,6 +31,17 @@ const Fotos = (() => {
   async function obtener(id) { if (!(await abrir())) return memoria.get(id) || null; return (await tx('readonly', s => s.get(id))) || null; }
   async function borrar(id) { if (await abrir()) await tx('readwrite', s => s.delete(id)); else memoria.delete(id); if (urls.has(id)) { URL.revokeObjectURL(urls.get(id)); urls.delete(id); } }
   async function borrarTodas() { if (await abrir()) await tx('readwrite', s => s.clear()); memoria.clear(); urls.forEach(u => URL.revokeObjectURL(u)); urls.clear(); }
+  // Gira la foto guardada (90 = derecha, -90 = izquierda) y devuelve sus nuevas medidas
+  async function girar(id, grados) {
+    const b = await obtener(id); if (!b) return null;
+    const bmp = await createImageBitmap(b), g = ((grados % 360) + 360) % 360, cambia = g === 90 || g === 270;
+    const c = document.createElement('canvas'); c.width = cambia ? bmp.height : bmp.width; c.height = cambia ? bmp.width : bmp.height;
+    const x = c.getContext('2d'); x.translate(c.width / 2, c.height / 2); x.rotate(g * Math.PI / 180); x.drawImage(bmp, -bmp.width / 2, -bmp.height / 2);
+    const nb = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.88));
+    if (await abrir()) await tx('readwrite', s => s.put(nb, id)); else memoria.set(id, nb);
+    if (urls.has(id)) { URL.revokeObjectURL(urls.get(id)); urls.delete(id); }
+    return { w: c.width, h: c.height };
+  }
   async function url(id) { if (urls.has(id)) return urls.get(id); const b = await obtener(id); if (!b) return null; const u = URL.createObjectURL(b); urls.set(id, u); return u; }
-  return { guardar, obtener, borrar, borrarTodas, url };
+  return { guardar, obtener, borrar, borrarTodas, girar, url };
 })();

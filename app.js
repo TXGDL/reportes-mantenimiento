@@ -11,7 +11,7 @@ const PANTALLAS = ['pConfig', 'pInicio', 'pReporte', 'pCaptura', 'pSeccion', 'pR
 function mostrar(id) {
   PANTALLAS.forEach(p => $(p).hidden = p !== id);
   const estacion = config && sesion.estacionId ? config.estaciones.find(e => e.id === sesion.estacionId) : null;
-  $('subtitulo').textContent = sesion.usuario && estacion ? `${sesion.usuario} · Oficina ${estacion.nombre}` : 'Versión de prueba 0.5';
+  $('subtitulo').textContent = sesion.usuario && estacion ? `${sesion.usuario} · Oficina ${estacion.nombre}` : 'Versión de prueba 0.6';
   $('btnCambiar').hidden = !(config && sesion.usuario);
   window.scrollTo(0, 0);
 }
@@ -158,7 +158,8 @@ $('btnGenerar').addEventListener('click', async () => {
     if (!resp.ok) throw new Error('No se encontró la plantilla');
     const salida = Motor.generar(await resp.arrayBuffer(), Object.assign({}, encabezado(), cuerpo));
     archivoListo = new Blob([salida], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    nombreArchivo = `reporte_${reporte.numero}_anexo${reporte.anexo}.docx`;
+    const tit = ANEXOS.find(x => String(x.n) === reporte.anexo).titulo.replace(/(^|\s)(\S)/g, (m, sp, ch) => sp + ch.toUpperCase());
+    nombreArchivo = `${reporte.numero} ${tit}.docx`.replace(/[\\/:*?"<>|]/g, '');
     $('estado').textContent = '¡Listo! El reporte se generó correctamente.'; $('btnDescargar').hidden = false;
   } catch (e) { console.error(e); $('estado').textContent = 'Algo falló: ' + (e.message || e); }
   btn.disabled = false;

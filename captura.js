@@ -63,7 +63,8 @@ function pantallaSeccion(sec, nombre) {
 function filaFoto(s) {
   const d = document.createElement('div'); d.className = 'slot'; d.dataset.slot = s.id;
   d.innerHTML = `<div class="mini"><span>Sin foto</span></div><div class="info"><div class="et"></div><div class="num"></div>
-    <div class="bots"><button class="chico cam">📷 Cámara</button><button class="chico sec gal">🖼 Galería</button></div></div>`;
+    <div class="bots"><button class="chico cam">📷 Cámara</button><button class="chico sec gal">🖼 Galería</button></div>
+    <div class="bots giro" hidden><button class="chico sec izq" aria-label="Girar a la izquierda">↺ Girar</button><button class="chico sec der" aria-label="Girar a la derecha">Girar ↻</button></div></div>`;
   d.querySelector('.et').textContent = s.etiqueta;
   if (s.unidad) {
     const i = document.createElement('input'); i.type = 'text'; i.inputMode = 'decimal'; i.placeholder = 'Valor'; i.value = borrador.valores[s.id] || '';
@@ -72,24 +73,40 @@ function filaFoto(s) {
   }
   d.querySelector('.cam').addEventListener('click', () => { slotActual = s.id; $('inCam').click(); });
   d.querySelector('.gal').addEventListener('click', () => { slotActual = s.id; $('inGal').click(); });
+  d.querySelector('.izq').addEventListener('click', () => girarFoto(s.id, -90));
+  d.querySelector('.der').addEventListener('click', () => girarFoto(s.id, 90));
+  d.querySelector('.mini').addEventListener('click', () => { if (borrador.fotos[s.id]) abrirVisor(s.id); });
   pintarMiniatura(d, s.id); return d;
 }
 async function pintarMiniatura(fila, id) {
   const m = fila.querySelector('.mini'), u = borrador.fotos[id] ? await Fotos.url(id) : null;
   m.innerHTML = u ? `<img alt="">` : '<span>Sin foto</span>'; if (u) m.querySelector('img').src = u;
-  fila.querySelector('.cam').textContent = u ? '📷 Repetir' : '📷 Cámara';
+  fila.querySelector('.cam').textContent = u ? '📷 Repetir' : '📷 Cámara'; fila.querySelector('.giro').hidden = !u;
 }
 async function agregarFoto(id, file) {
   const dim = await Fotos.guardar(id, file); borrador.fotos[id] = dim; guardarBorrador();
   const fila = document.querySelector(`.slot[data-slot="${id}"]`); if (fila) pintarMiniatura(fila, id);
 }
-function iniciarCaptura() { ['inCam', 'inGal'].forEach(k => $(k).addEventListener('change', async e => {
+  // ---------- Girar y ver en grande ----------
+let visorId = null;
+async function girarFoto(id, g) {
+  const dim = await Fotos.girar(id, g); if (!dim) return;
+  borrador.fotos[id] = dim; guardarBorrador();
+  const fila = document.querySelector(`.slot[data-slot="${id}"]`); if (fila) pintarMiniatura(fila, id);
+  if (visorId === id) $('visorImg').src = await Fotos.url(id);
+}
+async function abrirVisor(id) { visorId = id; $('visorImg').src = await Fotos.url(id); $('visor').hidden = false; }
+function cerrarVisor() { $('visor').hidden = true; visorId = null; }
+
+function iniciarCaptura() {
+  $('vIzq').addEventListener('click', () => girarFoto(visorId, -90)); $('vDer').addEventListener('click', () => girarFoto(visorId, 90)); $('vCerrar').addEventListener('click', cerrarVisor);
+  ['inCam', 'inGal'].forEach(k => $(k).addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f || !slotActual) return;
   try { await agregarFoto(slotActual, f); } catch (err) { alert('No se pudo guardar la foto: ' + (err.message || err)); }
 })); }
 
 // ---------- Datos para el documento ----------
-const fmtValor = (v, u) => { v = (v || '').trim().replace(',', '.'); return v ? `${v} ${u}` : '—'; };
+const fmtValor = (v, u) => { v = (v || '').trim().replace(',', '.'); return v ? `${v}\u00a0${u}` : '—'; };
 async function armarCuerpo() {
   const d = defActual(), tx = borrador.textos, F = {};
   for (const id of Object.keys(borrador.fotos)) { const b = await Fotos.obtener(id); if (b) F[id] = { data: new Uint8Array(await b.arrayBuffer()), w: borrador.fotos[id].w, h: borrador.fotos[id].h }; }
