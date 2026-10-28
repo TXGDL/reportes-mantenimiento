@@ -7,11 +7,16 @@ const LS = {
 let config = LS.get('rm_config'), sesion = LS.get('rm_sesion') || {}, reporte = LS.get('rm_reporte') || {};
 let archivoListo = null, nombreArchivo = 'borrador.docx';
 
+function aviso(msg, ms = 3500, error = false) {
+  const t = $('toast'); t.textContent = msg; t.className = error ? 'error' : ''; t.hidden = false;
+  clearTimeout(aviso.t); aviso.t = setTimeout(() => { t.hidden = true; }, ms);
+}
+$('version').textContent = 'v' + VERSION;
 const PANTALLAS = ['pConfig', 'pInicio', 'pReporte', 'pCaptura', 'pSeccion', 'pResumen'];
 function mostrar(id) {
   PANTALLAS.forEach(p => $(p).hidden = p !== id);
   const estacion = config && sesion.estacionId ? config.estaciones.find(e => e.id === sesion.estacionId) : null;
-  $('subtitulo').textContent = sesion.usuario && estacion ? `${sesion.usuario} · Oficina ${estacion.nombre}` : 'Versión de prueba 0.6';
+  $('subtitulo').textContent = sesion.usuario && estacion ? `${sesion.usuario} · Oficina ${estacion.nombre}` : 'Sin sesión iniciada';
   $('btnCambiar').hidden = !(config && sesion.usuario);
   window.scrollTo(0, 0);
 }
@@ -65,6 +70,11 @@ $('btnInicio').addEventListener('click', () => {
   pantallaReporte();
 });
 $('btnCambiar').addEventListener('click', pantallaInicio);
+$('btnLogout').addEventListener('click', () => {
+  if (!confirm('¿Cerrar sesión? Se desconecta Google y se quita la configuración de este celular. Las fotos y lo capturado NO se borran.')) return;
+  Drive.cerrarSesion(); LS.del('rm_config'); LS.del('rm_config_fileid'); LS.del('rm_sesion');
+  config = null; sesion = {}; $('errConfig').textContent = ''; $('estadoInicio').textContent = ''; mostrar('pConfig');
+});
 
 // ---------- Datos del reporte ----------
 function pantallaReporte() {
@@ -154,7 +164,7 @@ $('btnGenerar').addEventListener('click', async () => {
     $('estado').textContent = 'Armando el reporte…';
     const cuerpo = await armarCuerpo();
     if (!cuerpo.solicitud) cuerpo.solicitud = await fotoFalsa('SOLICITUD PENDIENTE DE AGREGAR', 1240, 1500, '#d8d8d8');
-    const resp = await fetch('plantilla/plantilla_maestra_reporte.docx');
+    const resp = await fetch('plantilla/plantilla_maestra_reporte.docx', { cache: 'no-cache' });
     if (!resp.ok) throw new Error('No se encontró la plantilla');
     const salida = Motor.generar(await resp.arrayBuffer(), Object.assign({}, encabezado(), cuerpo));
     archivoListo = new Blob([salida], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
@@ -177,4 +187,22 @@ function iniciar() {
 }
 iniciarCaptura();
 iniciar();
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    const revisar = () => reg.update().catch(() => {});
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) revisar(); });
+    reg.addEventListener('updatefound', () => {
+      const nuevo = reg.installing;
+      if (nuevo) nuevo.addEventListener('statechange', () => { if (nuevo.state === 'installed' && navigator.serviceWorker.controller) $('avisoActualizar').hidden = false; });
+    });
+  }).catch(() => {});
+  $('avisoActualizar').addEventListener('click', () => location.reload());
+}
+// Avisa si en línea ya hay una versión más nueva que la que está abierta
+async function verificarVersion() {
+  try {
+    const r = await fetch('version.js?t=' + Date.now(), { cache: 'no-store' }), m = /VERSION\s*=\s*'([^']+)'/.exec(await r.text());
+    if (m && m[1] !== VERSION) { $('avisoActualizar').innerHTML = `Hay una versión nueva (v${m[1]}). <b>Toca aquí para actualizar</b>`; $('avisoActualizar').hidden = false; }
+  } catch (e) {}
+}
+verificarVersion(); document.addEventListener('visibilitychange', () => { if (!document.hidden) verificarVersion(); });

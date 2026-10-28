@@ -64,15 +64,15 @@ function filaFoto(s) {
   const d = document.createElement('div'); d.className = 'slot'; d.dataset.slot = s.id;
   d.innerHTML = `<div class="mini"><span>Sin foto</span></div><div class="info"><div class="et"></div><div class="num"></div>
     <div class="bots"><button class="chico cam">📷 Cámara</button><button class="chico sec gal">🖼 Galería</button></div>
-    <div class="bots giro" hidden><button class="chico sec izq" aria-label="Girar a la izquierda">↺ Girar</button><button class="chico sec der" aria-label="Girar a la derecha">Girar ↻</button></div></div>`;
+    <div class="bots giro"><button class="chico sec izq" aria-label="Girar a la izquierda" disabled>↺ Girar</button><button class="chico sec der" aria-label="Girar a la derecha" disabled>Girar ↻</button></div></div>`;
   d.querySelector('.et').textContent = s.etiqueta;
   if (s.unidad) {
     const i = document.createElement('input'); i.type = 'text'; i.inputMode = 'decimal'; i.placeholder = 'Valor'; i.value = borrador.valores[s.id] || '';
     i.addEventListener('input', () => { borrador.valores[s.id] = i.value; guardarBorrador(); });
     const u = document.createElement('span'); u.textContent = ' ' + s.unidad; d.querySelector('.num').append(i, u);
   }
-  d.querySelector('.cam').addEventListener('click', () => { slotActual = s.id; $('inCam').click(); });
-  d.querySelector('.gal').addEventListener('click', () => { slotActual = s.id; $('inGal').click(); });
+  d.querySelector('.cam').addEventListener('click', () => { slotActual = s.id; LS.set('rm_slot', s.id); $('inCam').click(); });
+  d.querySelector('.gal').addEventListener('click', () => { slotActual = s.id; LS.set('rm_slot', s.id); $('inGal').click(); });
   d.querySelector('.izq').addEventListener('click', () => girarFoto(s.id, -90));
   d.querySelector('.der').addEventListener('click', () => girarFoto(s.id, 90));
   d.querySelector('.mini').addEventListener('click', () => { if (borrador.fotos[s.id]) abrirVisor(s.id); });
@@ -81,7 +81,7 @@ function filaFoto(s) {
 async function pintarMiniatura(fila, id) {
   const m = fila.querySelector('.mini'), u = borrador.fotos[id] ? await Fotos.url(id) : null;
   m.innerHTML = u ? `<img alt="">` : '<span>Sin foto</span>'; if (u) m.querySelector('img').src = u;
-  fila.querySelector('.cam').textContent = u ? '📷 Repetir' : '📷 Cámara'; fila.querySelector('.giro').hidden = !u;
+  fila.querySelector('.cam').textContent = u ? '📷 Repetir' : '📷 Cámara'; fila.querySelectorAll('.giro button').forEach(b => b.disabled = !u);
 }
 async function agregarFoto(id, file) {
   const dim = await Fotos.guardar(id, file); borrador.fotos[id] = dim; guardarBorrador();
@@ -101,9 +101,19 @@ function cerrarVisor() { $('visor').hidden = true; visorId = null; }
 function iniciarCaptura() {
   $('vIzq').addEventListener('click', () => girarFoto(visorId, -90)); $('vDer').addEventListener('click', () => girarFoto(visorId, 90)); $('vCerrar').addEventListener('click', cerrarVisor);
   ['inCam', 'inGal'].forEach(k => $(k).addEventListener('change', async e => {
-  const f = e.target.files[0]; e.target.value = ''; if (!f || !slotActual) return;
-  try { await agregarFoto(slotActual, f); } catch (err) { alert('No se pudo guardar la foto: ' + (err.message || err)); }
-})); }
+    const f = e.target.files && e.target.files[0], slot = slotActual || LS.get('rm_slot');
+    if (!f) return;
+    if (!slot) { aviso('Toca de nuevo el botón de la cámara o la galería del espacio donde va la foto.', 6000, true); e.target.value = ''; return; }
+    try {
+      aviso('Guardando foto…', 60000);
+      await agregarFoto(slot, f);          // primero se lee y guarda; el selector se reinicia hasta el final
+      aviso('Foto guardada ✓', 2500);
+    } catch (err) {
+      console.error(err);
+      aviso('No se pudo guardar la foto: ' + (err && err.name ? err.name + ': ' : '') + ((err && err.message) || err), 15000, true);
+    } finally { e.target.value = ''; }
+  }));
+}
 
 // ---------- Datos para el documento ----------
 const fmtValor = (v, u) => { v = (v || '').trim().replace(',', '.'); return v ? `${v}\u00a0${u}` : '—'; };

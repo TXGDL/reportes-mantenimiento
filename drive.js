@@ -58,5 +58,9 @@ const Drive = (() => {
     if (!f) f = await elegir(tk);
     return { config: await leerPorId(f.id, tk), fileId: f.id };
   }
-  return { cargarConfig };
+  function cerrarSesion() {
+    try { if (token && window.google && google.accounts && google.accounts.oauth2) google.accounts.oauth2.revoke(token, () => {}); } catch (e) {}
+    token = null; vence = 0;
+  }
+  return { cargarConfig, cerrarSesion };
 })();
