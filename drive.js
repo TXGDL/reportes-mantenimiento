@@ -58,23 +58,26 @@ const Drive = (() => {
     if (!f) f = await elegir(tk);
     return { config: await leerPorId(f.id, tk), fileId: f.id };
   }
-  // Abre la ventana de Drive para elegir una imagen (buscando 'consulta') y la descarga en su calidad original
-  async function elegirArchivo({ consulta, titulo }) {
+  // Abre la ventana de Drive para elegir una imagen y la descarga en su calidad original.
+  // Con 'carpetas' ([{id, etiqueta}]) la ventana solo muestra esas carpetas (y sus subcarpetas); sin ellas busca en todo el Drive.
+  async function elegirArchivo({ consulta, titulo, carpetas }) {
     const tk = await obtenerToken();
     const doc = await new Promise((res, rej) => {
       gapi.load('picker', () => {
-        const vista = id => { const v = new google.picker.DocsView(id).setIncludeFolders(true).setSelectFolderEnabled(false); return v; };
-        const v1 = vista(google.picker.ViewId.DOCS_IMAGES); if (consulta) v1.setQuery(consulta);
-        new google.picker.PickerBuilder().setAppId(GOOGLE.proyecto).setOAuthToken(tk).setDeveloperKey(GOOGLE.apiKey)
-          .setTitle(titulo || 'Elige el archivo').setLocale('es').addView(v1).addView(vista(google.picker.ViewId.DOCS))
-          .setCallback(r => { if (r.action === 'picked') res(r.docs[0]); else if (r.action === 'cancel') rej(new Error('No elegiste ningún archivo.')); })
-          .build().setVisible(true);
+        const P = google.picker, vista = id => new P.DocsView(id).setIncludeFolders(true).setSelectFolderEnabled(false);
+        const b = new P.PickerBuilder().setAppId(GOOGLE.proyecto).setOAuthToken(tk).setDeveloperKey(GOOGLE.apiKey).setTitle(titulo || 'Elige el archivo').setLocale('es');
+        if (carpetas && carpetas.length) {
+          carpetas.forEach(c => { const v = vista(P.ViewId.DOCS).setParent(c.id).setMimeTypes('image/png,image/jpeg,image/webp'); if (v.setLabel) v.setLabel(c.etiqueta); b.addView(v); });
+        } else {
+          const v1 = vista(P.ViewId.DOCS_IMAGES); if (consulta) v1.setQuery(consulta); b.addView(v1).addView(vista(P.ViewId.DOCS));
+        }
+        b.setCallback(r => { if (r.action === 'picked') res(r.docs[0]); else if (r.action === 'cancel') rej(new Error('No elegiste ningún archivo.')); }).build().setVisible(true);
       });
     });
     const resp = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(doc.id)}?alt=media`, tk);
     const tipo = (doc.mimeType || resp.headers.get('content-type') || '').toLowerCase();
     if (!/^image\//.test(tipo)) throw new Error(`El archivo "${doc.name || ''}" no es una imagen. Sube la solicitud como imagen (PNG o JPG).`);
-    return { bytes: await resp.arrayBuffer(), tipo, nombre: doc.name || '' };
+    return { bytes: await resp.arrayBuffer(), tipo, nombre: doc.name || '', carpetaId: doc.parentId || '' };
   }
   function cerrarSesion() {
     try { if (token && window.google && google.accounts && google.accounts.oauth2) google.accounts.oauth2.revoke(token, () => {}); } catch (e) {}

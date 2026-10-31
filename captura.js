@@ -75,7 +75,7 @@ function filaFoto(s) {
     const u = document.createElement('span'); u.textContent = ' ' + s.unidad; d.querySelector('.num').append(i, u);
   }
   if (s.origen === 'drive') {
-    d.querySelector('.hint').textContent = `En Drive busca: ${s.buscar} ${reporte.numero || ''}`.trim();
+    d.querySelector('.hint').textContent = pistaSolicitud(s);
     d.querySelector('.drv').addEventListener('click', () => elegirDeDrive(s));
   } else d.querySelector('.cam').addEventListener('click', () => { slotActual = s.id; LS.set('rm_slot', s.id); $('inCam').click(); });
   d.querySelector('.gal').addEventListener('click', () => { slotActual = s.id; LS.set('rm_slot', s.id); $('inGal').click(); });
@@ -97,10 +97,25 @@ async function agregarFoto(id, file) {
   const fila = document.querySelector(`.slot[data-slot="${id}"]`); if (fila) pintarMiniatura(fila, id);
 }
   // ---------- Elegir un archivo desde Drive (solicitud) ----------
+const MESES_CARPETA = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+const baseSolicitudes = () => (config && config.solicitudes && config.solicitudes.carpetaBaseId) || '';
+function carpetasSolicitud() {
+  const base = baseSolicitudes(), rec = LS.get('rm_carpeta_sol'), L = [];
+  if (!base) return null;                                   // sin carpeta base configurada: se busca en todo el Drive
+  if (rec && rec !== base) L.push({ id: rec, etiqueta: 'Carpeta reciente' });
+  L.push({ id: base, etiqueta: 'Reportes' }); return L;
+}
+function pistaSolicitud(s) {
+  const n = reporte.numero || '', f = reporte.fecha;
+  if (!baseSolicitudes() || !f) return `En Drive busca: ${s.buscar} ${n}`.trim();
+  const [y, m] = f.split('-');
+  return `Abre ${y} › mantenimientos › ${m} ${MESES_CARPETA[Number(m) - 1]} y elige: ${s.buscar} ${n}`.trim();
+}
 async function elegirDeDrive(s) {
   try {
     aviso('Abriendo Drive…', 8000);
-    const r = await Drive.elegirArchivo({ consulta: `${s.buscar || ''} ${reporte.numero || ''}`.trim(), titulo: s.etiqueta });
+    const r = await Drive.elegirArchivo({ consulta: `${s.buscar || ''} ${reporte.numero || ''}`.trim(), titulo: s.etiqueta, carpetas: carpetasSolicitud() });
+    if (r.carpetaId) LS.set('rm_carpeta_sol', r.carpetaId);       // la próxima vez abre directo en esta carpeta
     aviso('Guardando la imagen…', 60000);
     const dim = await Fotos.guardarOriginal(s.id, r.bytes, r.tipo);
     borrador.fotos[s.id] = Object.assign({}, dim, { nombre: r.nombre }); guardarBorrador();
