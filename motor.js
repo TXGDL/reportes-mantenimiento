@@ -2,7 +2,7 @@
 (function (root) {
   const MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const MC  = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  const MAXW = { solicitud: [15, 17] };
+  const MAXW = { solicitud: [16.5, 18] };
 
   // Reparte la altura libre de la página 2 entre las fotos de la introducción
   function limitesIntro(d, LIM, id) {

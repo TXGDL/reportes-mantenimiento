@@ -35,6 +35,25 @@ const Fotos = (() => {
     const buf = await blob.arrayBuffer();
     if (await abrir()) await tx('readwrite', s => s.put({ buf, tipo: blob.type || 'image/jpeg' }, id)); else memoria.set(id, blob);
   }
+  // Para documentos (como la solicitud): el PNG entra tal cual; lo demás se pasa a JPG de alta calidad. No se reduce salvo que sea enorme.
+  async function guardarOriginal(id, bytes, tipo, max = 3200) {
+    if (!bytes || !bytes.byteLength) throw new Error('El archivo llegó vacío');
+    tipo = (tipo || '').toLowerCase();
+    const bmp = await decodificar(new Blob([bytes], { type: tipo || 'image/png' }));
+    const w0 = bmp.width || bmp.naturalWidth, h0 = bmp.height || bmp.naturalHeight;
+    let blob, w = w0, h = h0;
+    if (tipo === 'image/png' && Math.max(w0, h0) <= max && bytes.byteLength <= 10 * 1024 * 1024) blob = new Blob([bytes], { type: 'image/png' });
+    else {
+      const k = Math.min(1, max / Math.max(w0, h0)); w = Math.max(1, Math.round(w0 * k)); h = Math.max(1, Math.round(h0 * k));
+      const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(bmp, 0, 0, w, h);
+      blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.95));
+      if (!blob || !blob.size) throw new Error('El teléfono no pudo procesar la imagen');
+    }
+    await poner(id, blob);
+    if (urls.has(id)) { URL.revokeObjectURL(urls.get(id)); urls.delete(id); }
+    const verif = await obtener(id); if (!verif || !verif.size) throw new Error('La imagen no quedó guardada en el teléfono');
+    return { w, h };
+  }
   async function guardar(id, file) {
     const bytes = await leerBytes(file);
     if (!bytes || !bytes.byteLength) throw new Error('La foto llegó vacía');
@@ -63,5 +82,5 @@ const Fotos = (() => {
     return { w: c.width, h: c.height };
   }
   async function url(id) { if (urls.has(id)) return urls.get(id); const b = await obtener(id); if (!b) return null; const u = URL.createObjectURL(b); urls.set(id, u); return u; }
-  return { guardar, obtener, borrar, borrarTodas, girar, url };
+  return { guardar, guardarOriginal, leerBytes, obtener, borrar, borrarTodas, girar, url };
 })();

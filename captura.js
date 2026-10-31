@@ -62,8 +62,11 @@ function pantallaSeccion(sec, nombre) {
 }
 function filaFoto(s) {
   const d = document.createElement('div'); d.className = 'slot'; d.dataset.slot = s.id;
+  const botones = s.origen === 'drive'
+    ? '<button class="chico drv">📁 Elegir de Drive</button><button class="chico sec gal">📱 Del celular</button>'
+    : '<button class="chico cam">📷 Cámara</button><button class="chico sec gal">🖼 Galería</button>';
   d.innerHTML = `<div class="mini"><span>Sin foto</span></div><div class="info"><div class="et"></div><div class="num"></div>
-    <div class="bots"><button class="chico cam">📷 Cámara</button><button class="chico sec gal">🖼 Galería</button></div>
+    <div class="hint"></div><div class="bots">${botones}</div>
     <div class="bots giro"><button class="chico sec izq" aria-label="Girar a la izquierda" disabled>↺ Girar</button><button class="chico sec der" aria-label="Girar a la derecha" disabled>Girar ↻</button></div></div>`;
   d.querySelector('.et').textContent = s.etiqueta;
   if (s.unidad) {
@@ -71,7 +74,10 @@ function filaFoto(s) {
     i.addEventListener('input', () => { borrador.valores[s.id] = i.value; guardarBorrador(); });
     const u = document.createElement('span'); u.textContent = ' ' + s.unidad; d.querySelector('.num').append(i, u);
   }
-  d.querySelector('.cam').addEventListener('click', () => { slotActual = s.id; LS.set('rm_slot', s.id); $('inCam').click(); });
+  if (s.origen === 'drive') {
+    d.querySelector('.hint').textContent = `En Drive busca: ${s.buscar} ${reporte.numero || ''}`.trim();
+    d.querySelector('.drv').addEventListener('click', () => elegirDeDrive(s));
+  } else d.querySelector('.cam').addEventListener('click', () => { slotActual = s.id; LS.set('rm_slot', s.id); $('inCam').click(); });
   d.querySelector('.gal').addEventListener('click', () => { slotActual = s.id; LS.set('rm_slot', s.id); $('inGal').click(); });
   d.querySelector('.izq').addEventListener('click', () => girarFoto(s.id, -90));
   d.querySelector('.der').addEventListener('click', () => girarFoto(s.id, 90));
@@ -81,17 +87,32 @@ function filaFoto(s) {
 async function pintarMiniatura(fila, id) {
   const m = fila.querySelector('.mini'), u = borrador.fotos[id] ? await Fotos.url(id) : null;
   m.innerHTML = u ? `<img alt="">` : '<span>Sin foto</span>'; if (u) m.querySelector('img').src = u;
-  fila.querySelector('.cam').textContent = u ? '📷 Repetir' : '📷 Cámara'; fila.querySelectorAll('.giro button').forEach(b => b.disabled = !u);
+  const cam = fila.querySelector('.cam'); if (cam) cam.textContent = u ? '📷 Repetir' : '📷 Cámara';
+  const drv = fila.querySelector('.drv'); if (drv) drv.textContent = u ? '📁 Cambiar' : '📁 Elegir de Drive';
+  const hint = fila.querySelector('.hint'); if (hint && u && borrador.fotos[id].nombre) hint.textContent = 'Elegida: ' + borrador.fotos[id].nombre; fila.querySelectorAll('.giro button').forEach(b => b.disabled = !u);
 }
+const slotPorId = id => todasLasSecciones().flatMap(x => slotsDe(x.sec)).find(s => s.id === id);
 async function agregarFoto(id, file) {
-  const dim = await Fotos.guardar(id, file); borrador.fotos[id] = dim; guardarBorrador();
+  const def = slotPorId(id), dim = def && def.original ? await Fotos.guardarOriginal(id, await Fotos.leerBytes(file), file.type) : await Fotos.guardar(id, file); borrador.fotos[id] = dim; guardarBorrador();
   const fila = document.querySelector(`.slot[data-slot="${id}"]`); if (fila) pintarMiniatura(fila, id);
 }
-  // ---------- Girar y ver en grande ----------
+  // ---------- Elegir un archivo desde Drive (solicitud) ----------
+async function elegirDeDrive(s) {
+  try {
+    aviso('Abriendo Drive…', 8000);
+    const r = await Drive.elegirArchivo({ consulta: `${s.buscar || ''} ${reporte.numero || ''}`.trim(), titulo: s.etiqueta });
+    aviso('Guardando la imagen…', 60000);
+    const dim = await Fotos.guardarOriginal(s.id, r.bytes, r.tipo);
+    borrador.fotos[s.id] = Object.assign({}, dim, { nombre: r.nombre }); guardarBorrador();
+    const fila = document.querySelector(`.slot[data-slot="${s.id}"]`); if (fila) pintarMiniatura(fila, s.id);
+    aviso('Listo ✓ ' + r.nombre, 3500);
+  } catch (err) { console.error(err); aviso((err && err.message) || String(err), 12000, true); }
+}
+// ---------- Girar y ver en grande ----------
 let visorId = null;
 async function girarFoto(id, g) {
   const dim = await Fotos.girar(id, g); if (!dim) return;
-  borrador.fotos[id] = dim; guardarBorrador();
+  borrador.fotos[id] = Object.assign({}, borrador.fotos[id], dim); guardarBorrador();
   const fila = document.querySelector(`.slot[data-slot="${id}"]`); if (fila) pintarMiniatura(fila, id);
   if (visorId === id) $('visorImg').src = await Fotos.url(id);
 }

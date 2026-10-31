@@ -53,7 +53,7 @@
     ],
     cierre: { secciones: [
       { id: 'concl', titulo: 'Conclusiones', bloques: [{ tipo: 'texto', id: 'obs' }, { tipo: 'texto', id: 'concl' }] },
-      { id: 'anexos', titulo: 'Anexo: solicitud de mantenimiento', bloques: [{ tipo: 'fotos', id: 'f_sol', individual: true, slots: [{ id: 'solicitud', etiqueta: 'Foto de la solicitud de mantenimiento preventivo', pie: '' }] }] }
+      { id: 'anexos', titulo: 'Anexo: solicitud de mantenimiento', bloques: [{ tipo: 'fotos', id: 'f_sol', individual: true, slots: [{ id: 'solicitud', etiqueta: 'Solicitud de mantenimiento preventivo', pie: '', origen: 'drive', original: true, buscar: 'Solicitud' }] }] }
     ] }
   };
 })();
