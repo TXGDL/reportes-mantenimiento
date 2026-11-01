@@ -8,7 +8,7 @@ const ANEXOS = [
   { n: 14, titulo: 'Mantenimiento al deshidratador de línea' },
   { n: 15, titulo: 'Mantenimiento general al transmisor' },
   { n: 16, titulo: 'Mantenimiento al sistema de enfriamiento' },
-  { n: 17, titulo: 'Mantenimiento a la instalación eléctrica' },
+  { n: 17, titulo: 'Mantenimiento a la instalación eléctrica', disponible: true },
   { n: 18, titulo: 'Mantenimiento a los tanques de diésel' },
   { n: 19, titulo: 'Mantenimiento a las antenas parabólicas' },
   { n: 20, titulo: 'Mantenimiento a los extintores' },
