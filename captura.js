@@ -169,7 +169,7 @@ async function armarCuerpo() {
   return {
     intro: { parrafos: ['intro1', 'intro2', 'intro3'].map(k => (tx[k] || '').trim()).filter(Boolean), fotos: presentes(introSlots).map(s => ({ foto: F[s.id], pie: s.pie })) },
     materiales: d.materiales,
-    pasos: d.pasos.map(p => ({ titulo: p.titulo, bloques: p.secciones.flatMap(s => s.bloques.flatMap(aDoc)) })),
+    pasos: d.pasos.map(p => ({ titulo: p.titulo, bloques: p.secciones.flatMap(s => s.bloques.flatMap(aDoc)), opcional: p.opcional })).filter(p => !p.opcional || p.bloques.length),
     observaciones: tx.obs, conclusion: tx.concl, solicitud: F.solicitud || null
   };
 }

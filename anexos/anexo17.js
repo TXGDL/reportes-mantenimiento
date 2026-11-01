@@ -32,10 +32,11 @@
       p5: 'Al terminar la limpieza se pasó a tomar lecturas de la instalación eléctrica.',
       p6: 'Se revisó el etiquetado de tableros, breakers, cables y demás, encontrándose en orden.',
       p7: 'Una vez terminado el mantenimiento se procedió a cerrar las tapas.',
+      p8: 'Se reenergizó el sistema al terminar el mantenimiento, regresando toda la instalación a la normalidad.',
       obs: 'Mantenimiento realizado sin observaciones',
       concl: 'La instalación eléctrica se encuentra en buen estado.'
     },
-    etiquetasTextos: { intro1: 'Introducción', p1: 'Texto del paso 1', p2: 'Texto del paso 2', p3: 'Texto del paso 3', p4: 'Texto del paso 4', p5: 'Texto del paso 5', p6: 'Texto del paso 6', p7: 'Texto del paso 7', obs: 'Observaciones', concl: 'Conclusión' },
+    etiquetasTextos: { intro1: 'Introducción', p1: 'Texto del paso 1', p2: 'Texto del paso 2', p3: 'Texto del paso 3', p4: 'Texto del paso 4', p5: 'Texto del paso 5', p6: 'Texto del paso 6', p7: 'Texto del paso 7', p8: 'Texto del paso 8', obs: 'Observaciones', concl: 'Conclusión' },
     intro: { secciones: [{ id: 'intro', titulo: 'Introducción', bloques: [
       { tipo: 'texto', id: 'intro1' },
       ind('f_intro', [['diag', 'Diagrama eléctrico de la estación', 'Diagrama eléctrico de la estación'], ['herr', 'Herramientas usadas', 'Herramientas usadas en este mantenimiento']])
@@ -57,7 +58,9 @@
       { id: 'p6', titulo: 'Etiquetado de tableros, breakers, cables y demás', secciones: [{ id: 's6', titulo: 'Etiquetado', bloques: [{ tipo: 'texto', id: 'p6' },
         { tipo: 'fotos', id: 'etiq', titulo: 'Etiquetado', pie: 'Revisión de etiquetado', tabla: null, slots: [1, 2, 3, 4].map(i => ({ id: `etiq_${i}`, etiqueta: `Etiquetado ${i}` })) }] }] },
       { id: 'p7', titulo: 'Colocar las tapas de los tableros, supresores de picos, breakers, entre otros', secciones: [{ id: 's7', titulo: 'Cierre de tapas', bloques: [{ tipo: 'texto', id: 'p7' },
-        { tipo: 'fotos', id: 'cierre', titulo: 'Cierre de tapas', pie: 'Cierre de tapas', tabla: null, slots: [1, 2, 3].map(i => ({ id: `cierre_${i}`, etiqueta: `Tapas colocadas ${i}` })) }] }] }
+        { tipo: 'fotos', id: 'cierre', titulo: 'Cierre de tapas', pie: 'Cierre de tapas', tabla: null, slots: [1, 2, 3].map(i => ({ id: `cierre_${i}`, etiqueta: `Tapas colocadas ${i}` })) }] }] },
+      { id: 'p8', titulo: 'Energizar la instalación', secciones: [{ id: 's8', titulo: 'Energizar la instalación', bloques: [{ tipo: 'texto', id: 'p8' },
+        { tipo: 'fotos', id: 'energ', individual: true, slots: [{ id: 'energ_0', etiqueta: 'Instalación energizada (opcional)', pie: 'Reenergizado de la instalación' }] }] }] }
     ],
     cierre: { secciones: [
       { id: 'concl', titulo: 'Conclusiones', bloques: [{ tipo: 'texto', id: 'obs' }, { tipo: 'texto', id: 'concl' }] },

@@ -2,12 +2,12 @@
 const ANEXO_DEF = {};
 const ANEXOS = [
   { n: 10, titulo: 'Mantenimiento al transformador de aislamiento', disponible: true },
-  { n: 11, titulo: 'Mantenimiento al regulador de voltaje' },
+  { n: 11, titulo: 'Mantenimiento al regulador de voltaje', disponible: true },
   { n: 12, titulo: 'Mantenimiento a los equipos en el rack' },
   { n: 13, titulo: 'Mantenimiento a cables, conectores y rack' },
   { n: 14, titulo: 'Mantenimiento al deshidratador de línea' },
-  { n: 15, titulo: 'Mantenimiento general al transmisor' },
-  { n: 16, titulo: 'Mantenimiento al sistema de enfriamiento' },
+  { n: 15, titulo: 'Mantenimiento general al transmisor', disponible: true },
+  { n: 16, titulo: 'Mantenimiento al sistema de enfriamiento', disponible: true },
   { n: 17, titulo: 'Mantenimiento a la instalación eléctrica', disponible: true },
   { n: 18, titulo: 'Mantenimiento a los tanques de diésel' },
   { n: 19, titulo: 'Mantenimiento a las antenas parabólicas' },
