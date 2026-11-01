@@ -87,7 +87,7 @@ function pantallaReporte() {
   const disponibles = ANEXOS.map(a => [String(a.n), `${a.titulo}${a.disponible ? '' : ' (próximamente)'}`, !a.disponible]);
   opciones($('selAnexo'), disponibles, reporte.anexo || '10');
   const nom = n => ANEXOS.find(a => a.n === n), corto = t => { const x = t.replace(/^Mantenimiento (de |a |al |general al )?(los |las |la |el )?/i, ''); return x.charAt(0).toUpperCase() + x.slice(1); };
-  opciones($('selPrograma'), [['', '— Elegir del programa —'], ...PROGRAMA.map(([n, mes, ax]) => [String(n), `${n} · ${mes} · ${corto(nom(ax).titulo)}${nom(ax).disponible ? '' : ' (próximamente)'}`])], '');
+  opciones($('selPrograma'), [['', '— Elegir del programa —'], ...PROGRAMA.map(([n, mes, ax]) => [String(n), `${n} · ${corto(nom(ax).titulo)}${nom(ax).disponible ? '' : ' (próximamente)'}`])], '');
   $('inNumero').value = reporte.numero || ''; $('inFecha').value = reporte.fecha || hoy();
   $('inHoraIni').value = reporte.horaInicio || ''; $('inHoraFin').value = reporte.horaFin || '';
   const resp = config.responsable.personal, sel = new Set(reporte.personas || []);
