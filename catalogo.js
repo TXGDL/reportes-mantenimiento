@@ -24,3 +24,22 @@ const ANEXOS = [
   { n: 30, titulo: 'Mantenimiento de pintura interior, exterior, impermeabilizado y rotulación' },
   { n: 31, titulo: 'Mantenimiento a las torres de radiodifusión' }
 ];
+
+// Programa anual de mantenimientos: [número, mes, anexo del manual]. Solo sirve para llenar los datos más rápido; todo se puede cambiar a mano.
+const PROGRAMA = [
+  [1,'Enero',18],[2,'Enero',19],[3,'Enero',22],[4,'Enero',25],
+  [5,'Febrero',14],[6,'Febrero',17],[7,'Febrero',23],[8,'Febrero',24],
+  [9,'Marzo',13],[10,'Marzo',21],[11,'Marzo',25],
+  [12,'Abril',10],[13,'Abril',11],
+  [14,'Mayo',14],[15,'Mayo',25],
+  [16,'Junio',17],[17,'Junio',21],
+  [18,'1er semestre',26],[19,'1er semestre',27],[20,'1er semestre',28],
+  [21,'Julio',18],[22,'Julio',19],[23,'Julio',22],[24,'Julio',25],
+  [25,'Agosto',14],[26,'Agosto',23],[27,'Agosto',24],
+  [28,'Septiembre',12],[29,'Septiembre',13],[30,'Septiembre',21],[31,'Septiembre',25],
+  [32,'Octubre',10],[33,'Octubre',11],[34,'Octubre',15],[35,'Octubre',16],[36,'Octubre',17],
+  [37,'Noviembre',14],[38,'Noviembre',25],
+  [39,'Diciembre',21],
+  [40,'2do semestre',27],
+  [41,'Servicio anual',20]
+];

@@ -77,9 +77,17 @@ $('btnLogout').addEventListener('click', () => {
 });
 
 // ---------- Datos del reporte ----------
+$('selPrograma').addEventListener('change', () => {
+  const f = PROGRAMA.find(x => String(x[0]) === $('selPrograma').value); if (!f) return;
+  $('inNumero').value = f[0];
+  if (ANEXOS.find(a => a.n === f[2]).disponible) $('selAnexo').value = String(f[2]);
+  else aviso('Ese mantenimiento todavía no está en la app; solo se llenó el número.');
+});
 function pantallaReporte() {
-  const disponibles = ANEXOS.map(a => [String(a.n), `Anexo ${a.n}. ${a.titulo}${a.disponible ? '' : ' (próximamente)'}`, !a.disponible]);
+  const disponibles = ANEXOS.map(a => [String(a.n), `${a.titulo}${a.disponible ? '' : ' (próximamente)'}`, !a.disponible]);
   opciones($('selAnexo'), disponibles, reporte.anexo || '10');
+  const nom = n => ANEXOS.find(a => a.n === n), corto = t => { const x = t.replace(/^Mantenimiento (de |a |al |general al )?(los |las |la |el )?/i, ''); return x.charAt(0).toUpperCase() + x.slice(1); };
+  opciones($('selPrograma'), [['', '— Elegir del programa —'], ...PROGRAMA.map(([n, mes, ax]) => [String(n), `${n} · ${mes} · ${corto(nom(ax).titulo)}${nom(ax).disponible ? '' : ' (próximamente)'}`])], '');
   $('inNumero').value = reporte.numero || ''; $('inFecha').value = reporte.fecha || hoy();
   $('inHoraIni').value = reporte.horaInicio || ''; $('inHoraFin').value = reporte.horaFin || '';
   const resp = config.responsable.personal, sel = new Set(reporte.personas || []);
@@ -136,7 +144,7 @@ function pantallaResumen() {
   const anexo = ANEXOS.find(a => String(a.n) === reporte.anexo), otros = reporte.personas.filter(p => p !== r.personal);
   const [y, m, d] = reporte.fecha.split('-');
   const filas = [
-    ['Mantenimiento', `Anexo ${anexo.n}. ${anexo.titulo}`], ['No. de mantenimiento', reporte.numero], ['Fecha', `${d}/${m}/${y}`],
+    ['Mantenimiento', anexo.titulo], ['No. de mantenimiento', reporte.numero], ['Fecha', `${d}/${m}/${y}`],
     ['Horario', `${reporte.horaInicio} a ${reporte.horaFin} Hrs.`], ['Oficina de Estación', est.nombre],
     ['Responsable del reporte', r.nombre_portada], ['Colabora', otros.length ? otros.join(', ') : '(nadie más)'],
     ['Responsables del mantenimiento', [r.personal, ...otros].join(', ')],
