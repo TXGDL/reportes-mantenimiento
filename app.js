@@ -80,14 +80,12 @@ $('btnLogout').addEventListener('click', () => {
 $('selPrograma').addEventListener('change', () => {
   const f = PROGRAMA.find(x => String(x[0]) === $('selPrograma').value); if (!f) return;
   $('inNumero').value = f[0];
-  if (ANEXOS.find(a => a.n === f[2]).disponible) $('selAnexo').value = String(f[2]);
-  else aviso('Ese mantenimiento todavía no está en la app; solo se llenó el número.');
+  if (!ANEXOS.find(a => a.n === f[2]).disponible) aviso('Ese mantenimiento todavía no está en la app.');
 });
 function pantallaReporte() {
-  const disponibles = ANEXOS.map(a => [String(a.n), `${a.titulo}${a.disponible ? '' : ' (próximamente)'}`, !a.disponible]);
-  opciones($('selAnexo'), disponibles, reporte.anexo || '10');
-  const nom = n => ANEXOS.find(a => a.n === n), corto = t => { const x = t.replace(/^Mantenimiento (de |a |al |general al )?(los |las |la |el )?/i, ''); return x.charAt(0).toUpperCase() + x.slice(1); };
-  opciones($('selPrograma'), [['', '— Elegir del programa —'], ...PROGRAMA.map(([n, mes, ax]) => [String(n), `${n} · ${corto(nom(ax).titulo)}${nom(ax).disponible ? '' : ' (próximamente)'}`])], '');
+  const nom = n => ANEXOS.find(a => a.n === n), SUF = { 18: ' (Primer servicio)', 19: ' (Primer servicio)', 20: ' (Primer servicio)', 40: ' (Segundo servicio)', 41: ' (Único servicio anual)' };
+  const oficial = (n, ax) => { const x = nom(ax).titulo.replace(/^Mantenimiento /i, ''); return x.charAt(0).toUpperCase() + x.slice(1) + (SUF[n] || ''); };
+  opciones($('selPrograma'), [['', '— Elegir mantenimiento —'], ...PROGRAMA.map(([n, mes, ax]) => [String(n), `${n} · ${oficial(n, ax)}${nom(ax).disponible ? '' : ' (próximamente)'}`])], reporte.programa || '');
   $('inNumero').value = reporte.numero || ''; $('inFecha').value = reporte.fecha || hoy();
   $('inHoraIni').value = reporte.horaInicio || ''; $('inHoraFin').value = reporte.horaFin || '';
   const resp = config.responsable.personal, sel = new Set(reporte.personas || []);
@@ -103,7 +101,7 @@ function pantallaReporte() {
 }
 function leerFormulario() {
   reporte = {
-    anexo: $('selAnexo').value, numero: $('inNumero').value.trim(), fecha: $('inFecha').value,
+    programa: $('selPrograma').value, anexo: String((PROGRAMA.find(x => String(x[0]) === $('selPrograma').value) || [])[2] || ''), numero: $('inNumero').value.trim(), fecha: $('inFecha').value,
     horaInicio: $('inHoraIni').value, horaFin: $('inHoraFin').value,
     personas: [...$('listaPersonas').querySelectorAll('input:checked:not(:disabled)')].map(c => c.value)
   };
@@ -111,6 +109,9 @@ function leerFormulario() {
 }
 $('btnResumen').addEventListener('click', () => {
   leerFormulario();
+  const ax = ANEXOS.find(a => String(a.n) === reporte.anexo);
+  if (!ax) { $('errReporte').textContent = 'Elige el mantenimiento de la lista.'; return; }
+  if (!ax.disponible) { $('errReporte').textContent = 'Ese mantenimiento todavía no está en la app.'; return; }
   const falta = !reporte.numero ? 'el número de mantenimiento' : !reporte.fecha ? 'la fecha' : !reporte.horaInicio ? 'la hora de inicio' : !reporte.horaFin ? 'la hora de término' : '';
   if (falta) { $('errReporte').textContent = 'Falta ' + falta + '.'; return; }
   pantallaCaptura();

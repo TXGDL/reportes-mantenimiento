@@ -14,7 +14,7 @@ const ANEXOS = [
   { n: 20, titulo: 'Mantenimiento a los extintores' },
   { n: 21, titulo: 'Mantenimiento a los registros eléctricos' },
   { n: 22, titulo: 'Mantenimiento al sistema de tierras' },
-  { n: 23, titulo: 'Mantenimiento al sistema hidráulico y bomba de agua' },
+  { n: 23, titulo: 'Mantenimiento al sistema hidráulico y bomba' },
   { n: 24, titulo: 'Mantenimiento al sistema sanitario' },
   { n: 25, titulo: 'Mantenimiento al predio' },
   { n: 26, titulo: 'Mantenimiento a las plantas de emergencia' },
