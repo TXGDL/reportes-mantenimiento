@@ -61,7 +61,8 @@
 <main>
   <section id="pConfig" class="card" hidden>
     <h2>Conectar con Google Drive</h2>
-    <p>Inicia sesión con la cuenta de Google del trabajo para cargar la configuración desde Drive. Solo hace falta la primera vez en este celular.</p>
+    <p>Elige tu oficina e inicia sesión con la cuenta de Google de esa oficina para cargar la configuración desde Drive. Solo hace falta la primera vez en este celular.</p>
+    <label for="selOficina">Oficina de Estación</label><select id="selOficina"></select>
     <button id="btnGoogle">Iniciar sesión con Google</button>
     <div id="estadoConfig" class="aviso"></div>
     <div id="errConfig" class="error"></div>
@@ -74,7 +75,6 @@
   <section id="pInicio" class="card" hidden>
     <h2>¿Quién eres?</h2>
     <label for="selUsuario">Tu nombre</label><select id="selUsuario"></select>
-    <label for="selEstacion">Oficina de Estación</label><select id="selEstacion"></select>
     <div id="errInicio" class="error"></div>
     <button id="btnInicio">Continuar</button>
     <button id="btnActualizarConfig" class="sec">Actualizar configuración desde Drive</button>

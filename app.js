@@ -34,12 +34,20 @@ function configValida(c) {
 }
 $('archivoConfig').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
+  setTimeout(() => { e.target.value = ''; }, 0);
   try {
     const c = JSON.parse(await f.text());
     if (!configValida(c)) throw new Error('El archivo no tiene el formato esperado');
-    config = c; LS.set('rm_config', c); $('errConfig').textContent = ''; iniciar();
+    if (!oficinaElegida()) throw new Error('Primero elige tu oficina de estación.');
+    if (!coincideOficina(c)) throw new Error('Este archivo no es de la oficina elegida.');
+    config = c; LS.set('rm_config', c); sesion = { estacionId: oficinaElegida() }; LS.set('rm_sesion', sesion); $('errConfig').textContent = ''; iniciar();
   } catch (err) { $('errConfig').textContent = 'No se pudo leer la configuración: ' + err.message; }
 });
+
+const oficinaElegida = () => $('selOficina').value;
+const coincideOficina = c => c.estaciones.some(e => e.id === oficinaElegida());
+opciones($('selOficina'), [['', '— Elegir oficina —'], ...OFICINAS], LS.get('rm_oficina') || '');
+$('selOficina').addEventListener('change', () => { LS.set('rm_oficina', oficinaElegida()); $('errConfig').textContent = ''; });
 
 // Carga desde Google Drive (primer uso y actualización)
 async function traerConfigDeDrive(salida) {
@@ -47,12 +55,16 @@ async function traerConfigDeDrive(salida) {
   try {
     const r = await Drive.cargarConfig(LS.get('rm_config_fileid'));
     if (!configValida(r.config)) throw new Error('El archivo de Drive no tiene el formato esperado.');
+    if (!coincideOficina(r.config)) { Drive.cerrarSesion(); LS.del('rm_config_fileid'); throw new Error('La cuenta de Google que usaste no corresponde a la oficina elegida. Elige la oficina correcta o entra con la cuenta de Gmail de esa oficina.'); }
     config = r.config; LS.set('rm_config', config); LS.set('rm_config_fileid', r.fileId);
+    sesion = Object.assign({}, sesion, { estacionId: oficinaElegida() || sesion.estacionId }); LS.set('rm_sesion', sesion);
     salida.textContent = ''; return true;
   } catch (e) { console.error(e); salida.textContent = ''; $('errConfig').textContent = e.message || String(e); $('estadoInicio').textContent = e.message || ''; return false; }
 }
 $('btnGoogle').addEventListener('click', async () => {
-  $('errConfig').textContent = ''; $('btnGoogle').disabled = true;
+  $('errConfig').textContent = '';
+  if (!oficinaElegida()) { $('errConfig').textContent = 'Primero elige tu oficina de estación.'; return; }
+  $('btnGoogle').disabled = true;
   if (await traerConfigDeDrive($('estadoConfig'))) iniciar();
   $('btnGoogle').disabled = false;
 });
@@ -65,18 +77,17 @@ $('btnActualizarConfig').addEventListener('click', async () => {
 // ---------- Identificación ----------
 function pantallaInicio() {
   opciones($('selUsuario'), config.personal.map(p => [p, p]), sesion.usuario);
-  opciones($('selEstacion'), config.estaciones.map(e => [e.id, e.nombre]), sesion.estacionId);
   mostrar('pInicio');
 }
 $('btnInicio').addEventListener('click', () => {
-  sesion = { usuario: $('selUsuario').value, estacionId: $('selEstacion').value }; LS.set('rm_sesion', sesion);
+  sesion = { usuario: $('selUsuario').value, estacionId: sesion.estacionId }; LS.set('rm_sesion', sesion);
   reporte.personas = [sesion.usuario].filter(p => p !== config.responsable.personal); LS.set('rm_reporte', reporte);
   pantallaReporte();
 });
 $('btnCambiar').addEventListener('click', pantallaInicio);
 $('btnLogout').addEventListener('click', () => {
   if (!confirm('¿Cerrar sesión? Se desconecta Google y se quita la configuración de este celular. Las fotos y lo capturado NO se borran.')) return;
-  Drive.cerrarSesion(); LS.del('rm_config'); LS.del('rm_config_fileid'); LS.del('rm_sesion');
+  Drive.cerrarSesion(); LS.del('rm_config'); LS.del('rm_config_fileid'); LS.del('rm_sesion'); LS.del('rm_oficina'); $('selOficina').value = '';
   config = null; sesion = {}; $('errConfig').textContent = ''; $('estadoInicio').textContent = ''; mostrar('pConfig');
 });
 
@@ -84,11 +95,11 @@ $('btnLogout').addEventListener('click', () => {
 $('selPrograma').addEventListener('change', () => {
   const f = PROGRAMA.find(x => String(x[0]) === $('selPrograma').value); if (!f) return;
   $('inNumero').value = f[0];
-  if (!ANEXOS.find(a => a.n === f[2]).disponible) aviso('Ese mantenimiento todavía no está en la app.');
+  if (!hayDef(f[2])) aviso('Ese mantenimiento todavía no está en la app.');
 });
 function pantallaReporte() {
   const nom = n => ANEXOS.find(a => a.n === n), oficial = (n, ax) => nombreCorto(nom(ax).titulo, n);
-  opciones($('selPrograma'), [['', '— Elegir mantenimiento —'], ...PROGRAMA.map(([n, mes, ax]) => [String(n), `${n} · ${oficial(n, ax)}${nom(ax).disponible ? '' : ' (próximamente)'}`])], reporte.programa || '');
+  opciones($('selPrograma'), [['', '— Elegir mantenimiento —'], ...PROGRAMA.map(([n, mes, ax]) => [String(n), `${n} · ${oficial(n, ax)}${hayDef(ax) ? '' : ' (próximamente)'}`])], reporte.programa || '');
   $('inNumero').value = reporte.numero || ''; $('inFecha').value = reporte.fecha || hoy();
   $('inHoraIni').value = reporte.horaInicio || ''; $('inHoraFin').value = reporte.horaFin || '';
   const resp = config.responsable.personal, sel = new Set(reporte.personas || []);
@@ -114,7 +125,7 @@ $('btnResumen').addEventListener('click', () => {
   leerFormulario();
   const ax = ANEXOS.find(a => String(a.n) === reporte.anexo);
   if (!ax) { $('errReporte').textContent = 'Elige el mantenimiento de la lista.'; return; }
-  if (!ax.disponible) { $('errReporte').textContent = 'Ese mantenimiento todavía no está en la app.'; return; }
+  if (!hayDef(ax.n)) { $('errReporte').textContent = 'Ese mantenimiento todavía no está en la app.'; return; }
   const falta = !reporte.numero ? 'el número de mantenimiento' : !reporte.fecha ? 'la fecha' : !reporte.horaInicio ? 'la hora de inicio' : !reporte.horaFin ? 'la hora de término' : '';
   if (falta) { $('errReporte').textContent = 'Falta ' + falta + '.'; return; }
   pantallaCaptura();
@@ -138,6 +149,8 @@ function encabezado() {
     nombre: r.nombre_portada, colabora: otros.join(', ').toUpperCase(), telefono: r.telefono, correo: r.correo,
     responsables: [r.personal, ...otros],
     hora_inicio: reporte.horaInicio + ' Hrs.', hora_fin: reporte.horaFin + ' Hrs.',
+    hi_raw: reporte.horaInicio, hf_raw: reporte.horaFin, formato_concl: (defActual() || {}).formatoConclusion || 'normal',
+    titulo_corto: anexo.titulo.charAt(0).toLowerCase() + anexo.titulo.slice(1),
     elabora_nombre: r.nombre_firma, elabora_area: 'Oficina de Estación ' + est.nombre,
     autoriza_nombre: config.autoriza.nombre, autoriza_area: config.autoriza.area,
     vobo_nombre: config.vobo.nombre, vobo_area: config.vobo.area
@@ -193,8 +206,9 @@ $('btnDescargar').addEventListener('click', () => {
 });
 
 function iniciar() {
-  if (!configValida(config)) { mostrar('pConfig'); return; }
-  if (!sesion.usuario || !sesion.estacionId) { pantallaInicio(); return; }
+  if (!configValida(config) || (sesion.estacionId && !config.estaciones.some(e => e.id === sesion.estacionId))) { config = null; mostrar('pConfig'); return; }
+  if (!sesion.estacionId) { sesion.estacionId = config.estaciones[0].id; LS.set('rm_sesion', sesion); }
+  if (!sesion.usuario) { pantallaInicio(); return; }
   pantallaReporte();
 }
 iniciarCaptura();

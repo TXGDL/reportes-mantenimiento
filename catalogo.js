@@ -1,5 +1,9 @@
 // Catálogo de anexos del manual de mantenimiento preventivo. "disponible" = ya tiene su procedimiento armado en la app.
 const ANEXO_DEF = {};
+// Procedimientos por oficina de estación: cada oficina tiene sus propios formatos
+const ANEXO_DEF_EST = { guadalajara: ANEXO_DEF, guaymas: {} };
+const OFICINAS = [['guadalajara', 'Guadalajara'], ['guaymas', 'Guaymas']];
+const hayDef = n => !!((ANEXO_DEF_EST[(typeof sesion !== 'undefined' && sesion.estacionId) || ''] || {})[n]);
 const ANEXOS = [
   { n: 10, titulo: 'Mantenimiento al transformador de aislamiento', disponible: true },
   { n: 11, titulo: 'Mantenimiento al regulador de voltaje', disponible: true },

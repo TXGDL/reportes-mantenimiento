@@ -2,7 +2,7 @@
 let borrador = null;
 let slotActual = null, seccionActual = null;
 
-const defActual = () => ANEXO_DEF[reporte.anexo];
+const defActual = () => (ANEXO_DEF_EST[sesion.estacionId] || {})[reporte.anexo];
 const guardarBorrador = () => LS.set('rm_borrador', borrador);
 function nuevoBorrador() { borrador = { anexo: reporte.anexo, textos: Object.assign({}, defActual().textos), fotos: {}, valores: {} }; guardarBorrador(); }
 function asegurarBorrador() { if (borrador === null) borrador = LS.get('rm_borrador'); if (!borrador || borrador.anexo !== reporte.anexo) nuevoBorrador(); }
