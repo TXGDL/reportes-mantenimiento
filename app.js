@@ -53,10 +53,10 @@ $('selOficina').addEventListener('change', () => { LS.set('rm_oficina', oficinaE
 async function traerConfigDeDrive(salida) {
   salida.textContent = 'Conectando con Google…';
   try {
-    const r = await Drive.cargarConfig(LS.get('rm_config_fileid'));
+    const r = await Drive.cargarConfig(LS.get('rm_config_fileid_' + oficinaElegida()));
     if (!configValida(r.config)) throw new Error('El archivo de Drive no tiene el formato esperado.');
-    if (!coincideOficina(r.config)) { Drive.cerrarSesion(); LS.del('rm_config_fileid'); throw new Error('La cuenta de Google que usaste no corresponde a la oficina elegida. Elige la oficina correcta o entra con la cuenta de Gmail de esa oficina.'); }
-    config = r.config; LS.set('rm_config', config); LS.set('rm_config_fileid', r.fileId);
+    if (!coincideOficina(r.config)) { Drive.cerrarSesion(); throw new Error('La cuenta de Google que usaste no corresponde a la oficina elegida. Elige la oficina correcta o entra con la cuenta de Gmail de esa oficina.'); }
+    config = r.config; LS.set('rm_config', config); LS.set('rm_config_fileid_' + oficinaElegida(), r.fileId);
     sesion = Object.assign({}, sesion, { estacionId: oficinaElegida() || sesion.estacionId }); LS.set('rm_sesion', sesion);
     salida.textContent = ''; return true;
   } catch (e) { console.error(e); salida.textContent = ''; $('errConfig').textContent = e.message || String(e); $('estadoInicio').textContent = e.message || ''; return false; }
@@ -87,7 +87,7 @@ $('btnInicio').addEventListener('click', () => {
 $('btnCambiar').addEventListener('click', pantallaInicio);
 $('btnLogout').addEventListener('click', () => {
   if (!confirm('¿Cerrar sesión? Se desconecta Google y se quita la configuración de este celular. Las fotos y lo capturado NO se borran.')) return;
-  Drive.cerrarSesion(); LS.del('rm_config'); LS.del('rm_config_fileid'); LS.del('rm_sesion'); LS.del('rm_oficina'); $('selOficina').value = '';
+  Drive.cerrarSesion(); LS.del('rm_config'); OFICINAS.forEach(o => LS.del('rm_config_fileid_' + o[0])); LS.del('rm_sesion'); LS.del('rm_oficina'); $('selOficina').value = '';
   config = null; sesion = {}; $('errConfig').textContent = ''; $('estadoInicio').textContent = ''; mostrar('pConfig');
 });
 
