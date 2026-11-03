@@ -20,6 +20,7 @@
     let ilu = 0, tab = 0;
     const foto = b => ({ es_foto: true, con_leyenda: true, imagen: id(b.foto), leyenda: `Ilustración ${++ilu} ${b.pie} (${corta})` });
     return Object.assign({}, d, {
+      hay_concl: !!(d.conclusion && String(d.conclusion).trim()),
       solicitud: d.solicitud ? id(d.solicitud) : undefined,
       fecha_larga: `${f.getDate()} de ${MES[f.getMonth()]} de ${f.getFullYear()}`,
       intro_parrafos: d.intro.parrafos.map(t => ({ texto: t })),
