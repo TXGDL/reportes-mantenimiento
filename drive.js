@@ -67,7 +67,7 @@ const Drive = (() => {
         const P = google.picker, vista = id => new P.DocsView(id).setIncludeFolders(true).setSelectFolderEnabled(false);
         const b = new P.PickerBuilder().setAppId(GOOGLE.proyecto).setOAuthToken(tk).setDeveloperKey(GOOGLE.apiKey).setTitle(titulo || 'Elige el archivo').setLocale('es');
         if (carpetas && carpetas.length) {
-          carpetas.forEach(c => { const v = vista(P.ViewId.DOCS).setParent(c.id).setMimeTypes('image/png,image/jpeg,image/webp'); if (v.setLabel) v.setLabel(c.etiqueta); b.addView(v); });
+          carpetas.forEach(c => { const v = vista(P.ViewId.DOCS).setParent(c.id).setMimeTypes('image/png,image/jpeg,image/webp,application/pdf'); if (v.setLabel) v.setLabel(c.etiqueta); b.addView(v); });
         } else {
           const v1 = vista(P.ViewId.DOCS_IMAGES); if (consulta) v1.setQuery(consulta); b.addView(v1).addView(vista(P.ViewId.DOCS));
         }
@@ -76,12 +76,31 @@ const Drive = (() => {
     });
     const resp = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(doc.id)}?alt=media`, tk);
     const tipo = (doc.mimeType || resp.headers.get('content-type') || '').toLowerCase();
-    if (!/^image\//.test(tipo)) throw new Error(`El archivo "${doc.name || ''}" no es una imagen. Sube la solicitud como imagen (PNG o JPG).`);
+    if (tipo === 'application/pdf' || /\.pdf$/i.test(doc.name || '')) {
+      const png = await pdfAImagen(await resp.arrayBuffer());
+      return { bytes: png, tipo: 'image/png', nombre: doc.name || '', carpetaId: doc.parentId || '' };
+    }
+    if (!/^image\//.test(tipo)) throw new Error(`El archivo "${doc.name || ''}" no es una imagen ni un PDF.`);
     return { bytes: await resp.arrayBuffer(), tipo, nombre: doc.name || '', carpetaId: doc.parentId || '' };
+  }
+  // Convierte la primera página de un PDF en una imagen PNG (con pdf.js, que se carga solo cuando hace falta)
+  function cargarScript(src) { return new Promise((ok, mal) => { const e = document.createElement('script'); e.src = src; e.onload = ok; e.onerror = () => mal(new Error('No se pudo cargar el lector de PDF.')); document.head.appendChild(e); }); }
+  async function pdfAImagen(buf) {
+    if (!window.pdfjsLib) await cargarScript('lib/pdf.min.js?v=' + (typeof VERSION !== 'undefined' ? VERSION : ''));
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js?v=' + (typeof VERSION !== 'undefined' ? VERSION : '');
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+    const pag = await pdf.getPage(1), v0 = pag.getViewport({ scale: 1 });
+    const esc = Math.min(3, 2600 / v0.width), vp = pag.getViewport({ scale: esc });
+    const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    await pag.render({ canvasContext: g, viewport: vp }).promise;
+    const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+    if (!blob) throw new Error('No se pudo convertir el PDF a imagen.');
+    return await blob.arrayBuffer();
   }
   function cerrarSesion() {
     try { if (token && window.google && google.accounts && google.accounts.oauth2) google.accounts.oauth2.revoke(token, () => {}); } catch (e) {}
     token = null; vence = 0;
   }
-  return { cargarConfig, cerrarSesion, elegirArchivo };
+  return { cargarConfig, cerrarSesion, elegirArchivo, pdfAImagen };
 })();
