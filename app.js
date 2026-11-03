@@ -12,12 +12,16 @@ function aviso(msg, ms = 3500, error = false) {
   clearTimeout(aviso.t); aviso.t = setTimeout(() => { t.hidden = true; }, ms);
 }
 $('version').textContent = 'v' + VERSION;
+const SUF_PROG = { 18: ' (Primer servicio)', 19: ' (Primer servicio)', 20: ' (Primer servicio)', 40: ' (Segundo servicio)', 41: ' (Único servicio anual)' };
+const nombreCorto = (titulo, n) => { const x = titulo.replace(/^Mantenimiento /i, '').replace(/^(a los |a las |a la |al |a )/i, ''); return x.charAt(0).toUpperCase() + x.slice(1) + (SUF_PROG[n] || ''); };
+function tituloReporte() { const ax = ANEXOS.find(x => String(x.n) === reporte.anexo); return ax && reporte.numero ? `${reporte.numero} · ${nombreCorto(ax.titulo, Number(reporte.programa) || 0)}` : ''; }
 const PANTALLAS = ['pConfig', 'pInicio', 'pReporte', 'pCaptura', 'pSeccion', 'pResumen'];
 function mostrar(id) {
   PANTALLAS.forEach(p => $(p).hidden = p !== id);
   const estacion = config && sesion.estacionId ? config.estaciones.find(e => e.id === sesion.estacionId) : null;
   $('subtitulo').textContent = sesion.usuario && estacion ? `${sesion.usuario} · Oficina ${estacion.nombre}` : 'Sin sesión iniciada';
   $('btnCambiar').hidden = !(config && sesion.usuario);
+  $('titulo').textContent = (['pCaptura', 'pSeccion', 'pResumen'].includes(id) && tituloReporte()) || 'Reportes de mantenimiento';
   window.scrollTo(0, 0);
 }
 const opciones = (sel, items, valor) => { sel.innerHTML = ''; items.forEach(([v, t, dis]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; o.disabled = !!dis; sel.appendChild(o); }); if (valor != null) sel.value = valor; };
@@ -83,8 +87,7 @@ $('selPrograma').addEventListener('change', () => {
   if (!ANEXOS.find(a => a.n === f[2]).disponible) aviso('Ese mantenimiento todavía no está en la app.');
 });
 function pantallaReporte() {
-  const nom = n => ANEXOS.find(a => a.n === n), SUF = { 18: ' (Primer servicio)', 19: ' (Primer servicio)', 20: ' (Primer servicio)', 40: ' (Segundo servicio)', 41: ' (Único servicio anual)' };
-  const oficial = (n, ax) => { const x = nom(ax).titulo.replace(/^Mantenimiento /i, ''); return x.charAt(0).toUpperCase() + x.slice(1) + (SUF[n] || ''); };
+  const nom = n => ANEXOS.find(a => a.n === n), oficial = (n, ax) => nombreCorto(nom(ax).titulo, n);
   opciones($('selPrograma'), [['', '— Elegir mantenimiento —'], ...PROGRAMA.map(([n, mes, ax]) => [String(n), `${n} · ${oficial(n, ax)}${nom(ax).disponible ? '' : ' (próximamente)'}`])], reporte.programa || '');
   $('inNumero').value = reporte.numero || ''; $('inFecha').value = reporte.fecha || hoy();
   $('inHoraIni').value = reporte.horaInicio || ''; $('inHoraFin').value = reporte.horaFin || '';

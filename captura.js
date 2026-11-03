@@ -67,7 +67,7 @@ function filaFoto(s) {
     : '<button class="chico cam">📷 Cámara</button><button class="chico sec gal">🖼 Galería</button>';
   d.innerHTML = `<div class="mini"><span>Sin foto</span></div><div class="info"><div class="et"></div><div class="num"></div>
     <div class="hint"></div><div class="bots">${botones}</div>
-    <div class="bots giro"><button class="chico sec izq" aria-label="Girar a la izquierda" disabled>↺ Girar</button><button class="chico sec der" aria-label="Girar a la derecha" disabled>Girar ↻</button></div></div>`;
+    <div class="bots giro"><button class="chico sec izq" aria-label="Girar a la izquierda" disabled>↺ Girar</button><button class="chico sec der" aria-label="Girar a la derecha" disabled>Girar ↻</button><button class="chico sec bor" aria-label="Borrar la foto" disabled>🗑 Borrar</button></div></div>`;
   d.querySelector('.et').textContent = s.etiqueta;
   if (s.unidad) {
     const i = document.createElement('input'); i.type = 'text'; i.inputMode = 'decimal'; i.placeholder = 'Valor'; i.value = borrador.valores[s.id] || '';
@@ -81,6 +81,7 @@ function filaFoto(s) {
   d.querySelector('.gal').addEventListener('click', () => { slotActual = s.id; LS.set('rm_slot', s.id); $('inGal').click(); });
   d.querySelector('.izq').addEventListener('click', () => girarFoto(s.id, -90));
   d.querySelector('.der').addEventListener('click', () => girarFoto(s.id, 90));
+  d.querySelector('.bor').addEventListener('click', () => borrarFoto(s.id));
   d.querySelector('.mini').addEventListener('click', () => { if (borrador.fotos[s.id]) abrirVisor(s.id); });
   pintarMiniatura(d, s.id); return d;
 }
@@ -90,6 +91,7 @@ async function pintarMiniatura(fila, id) {
   const cam = fila.querySelector('.cam'); if (cam) cam.textContent = u ? '📷 Repetir' : '📷 Cámara';
   const drv = fila.querySelector('.drv'); if (drv) drv.textContent = u ? '📁 Cambiar' : '📁 Elegir de Drive';
   const hint = fila.querySelector('.hint'); if (hint && u && borrador.fotos[id].nombre) hint.textContent = 'Elegida: ' + borrador.fotos[id].nombre; fila.querySelectorAll('.giro button').forEach(b => b.disabled = !u);
+  if (!u && hint) { const sd = slotPorId(id); if (sd && sd.origen === 'drive') hint.textContent = pistaSolicitud(sd); }
 }
 const slotPorId = id => todasLasSecciones().flatMap(x => slotsDe(x.sec)).find(s => s.id === id);
 async function agregarFoto(id, file) {
@@ -125,6 +127,14 @@ async function elegirDeDrive(s) {
 }
 // ---------- Girar y ver en grande ----------
 let visorId = null;
+async function borrarFoto(id) {
+  if (!borrador.fotos[id] || !confirm('¿Borrar esta foto?')) return;
+  try { await Fotos.borrar(id); } catch (e) { console.error(e); }
+  delete borrador.fotos[id]; guardarBorrador();
+  if (visorId === id) cerrarVisor();
+  const fila = document.querySelector(`.slot[data-slot="${id}"]`); if (fila) pintarMiniatura(fila, id);
+  aviso('Foto borrada', 2500);
+}
 async function girarFoto(id, g) {
   const dim = await Fotos.girar(id, g); if (!dim) return;
   borrador.fotos[id] = Object.assign({}, borrador.fotos[id], dim); guardarBorrador();
