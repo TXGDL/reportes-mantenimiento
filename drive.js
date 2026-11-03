@@ -40,7 +40,7 @@ const Drive = (() => {
   function elegir(tk) {
     return new Promise((res, rej) => {
       gapi.load('picker', () => {
-        const vista = new google.picker.DocsView(google.picker.ViewId.DOCS).setQuery(GOOGLE.archivoConfig).setIncludeFolders(true);
+        const vista = new google.picker.DocsView(google.picker.ViewId.DOCS).setIncludeFolders(true);
         new google.picker.PickerBuilder().setAppId(GOOGLE.proyecto).setOAuthToken(tk).setDeveloperKey(GOOGLE.apiKey)
           .setTitle('Elige el archivo ' + GOOGLE.archivoConfig).setLocale('es').addView(vista)
           .setCallback(d => {
