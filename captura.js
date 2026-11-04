@@ -4,8 +4,10 @@ let slotActual = null, seccionActual = null;
 
 const defActual = () => (ANEXO_DEF_EST[sesion.estacionId] || {})[reporte.anexo];
 const guardarBorrador = () => LS.set('rm_borrador', borrador);
-function nuevoBorrador() { borrador = { anexo: reporte.anexo, textos: Object.assign({}, defActual().textos), fotos: {}, valores: {} }; guardarBorrador(); }
-function asegurarBorrador() { if (borrador === null) borrador = LS.get('rm_borrador'); if (!borrador || borrador.anexo !== reporte.anexo) nuevoBorrador(); }
+function nuevoBorrador() { borrador = { anexo: reporte.anexo, textos: Object.assign({}, defActual().textos), fotos: {}, valores: {}, na: {} }; guardarBorrador(); }
+function asegurarBorrador() { if (borrador === null) borrador = LS.get('rm_borrador'); if (!borrador || borrador.anexo !== reporte.anexo) nuevoBorrador(); if (!borrador.na) borrador.na = {}; }
+const esPaso = sec => defActual().pasos.some(p => p.secciones.includes(sec));
+const esNA = sec => !!(borrador.na && borrador.na[sec.id]);
 
 function todasLasSecciones() {
   const d = defActual(), L = [];
@@ -18,10 +20,11 @@ const slotsDe = sec => sec.bloques.filter(b => b.tipo === 'fotos').flatMap(b => 
 function estadoSeccion(sec) {
   const sl = slotsDe(sec), conNum = sl.filter(s => s.unidad);
   const f = sl.filter(s => borrador.fotos[s.id]).length, n = conNum.filter(s => (borrador.valores[s.id] || '').trim() !== '').length;
-  return { f, ft: sl.length, n, nt: conNum.length, completo: f === sl.length && n === conNum.length };
+  const na = esNA(sec);
+  return { f, ft: sl.length, n, nt: conNum.length, na, completo: na || (f === sl.length && n === conNum.length) };
 }
 function totales() {
-  return todasLasSecciones().reduce((t, x) => { const e = estadoSeccion(x.sec); t.f += e.f; t.ft += e.ft; t.n += e.n; t.nt += e.nt; return t; }, { f: 0, ft: 0, n: 0, nt: 0 });
+  return todasLasSecciones().reduce((t, x) => { const e = estadoSeccion(x.sec); if (e.na) return t; t.f += e.f; t.ft += e.ft; t.n += e.n; t.nt += e.nt; return t; }, { f: 0, ft: 0, n: 0, nt: 0 });
 }
 
 // ---------- Lista de secciones ----------
@@ -31,7 +34,7 @@ function pantallaCaptura() {
   todasLasSecciones().forEach(({ sec, nombre }) => {
     const e = estadoSeccion(sec), b = document.createElement('button');
     b.className = 'seccion' + (e.completo ? ' ok' : '');
-    const partes = []; if (e.ft) partes.push(`${e.f}/${e.ft} fotos`); if (e.nt) partes.push(`${e.n}/${e.nt} lecturas`);
+    const partes = []; if (e.na) partes.push('No aplica'); else if (e.ft) partes.push(`${e.f}/${e.ft} fotos`); if (!e.na && e.nt) partes.push(`${e.n}/${e.nt} lecturas`);
     b.innerHTML = `<span class="marca">${e.completo ? '✓' : '○'}</span><span class="nom"></span><small></small>`;
     b.querySelector('.nom').textContent = nombre; b.querySelector('small').textContent = partes.join(' · ');
     b.addEventListener('click', () => pantallaSeccion(sec, nombre)); cont.appendChild(b);
@@ -45,20 +48,41 @@ function pantallaCaptura() {
 function pantallaSeccion(sec, nombre) {
   seccionActual = { sec, nombre }; $('tituloSeccion').textContent = nombre;
   const cont = $('cuerpoSeccion'); cont.innerHTML = '';
+  let leyenda = null;
+  const pintarLeyenda = () => {
+    if (!leyenda) return;
+    const on = esNA(sec); leyenda.hidden = !on; if (!on) return;
+    const igual = sec.bloques.filter(b => b.tipo === 'texto').every(b => (borrador.textos[b.id] || '').trim() === (defActual().textos[b.id] || '').trim());
+    leyenda.className = 'aviso-na' + (igual ? ' alerta' : '');
+    leyenda.textContent = igual
+      ? '⚠ Justifica en el texto de este paso por qué no se realizó o no hay fotografías (ahora tiene el texto original). Ese texto es el que saldrá en el reporte.'
+      : '✓ Este paso saldrá en el reporte solo con tu texto, sin fotografías.';
+  };
+  if (esPaso(sec)) {
+    const l = document.createElement('label'); l.className = 'chk na';
+    const c = document.createElement('input'); c.type = 'checkbox'; c.checked = esNA(sec);
+    c.addEventListener('change', () => {
+      borrador.na[sec.id] = c.checked; if (!c.checked) delete borrador.na[sec.id]; guardarBorrador(); pintarLeyenda();
+      if (c.checked) aviso('Escribe en el texto por qué no se realizó este paso.', 5000);
+    });
+    l.append(c, document.createTextNode(' No aplica / no se realizó este paso'));
+    leyenda = document.createElement('div'); leyenda.className = 'aviso-na'; leyenda.hidden = true;
+    cont.append(l, leyenda);
+  }
   sec.bloques.forEach(b => {
     if (b.tipo === 'texto') {
       const l = document.createElement('label'); l.textContent = defActual().etiquetasTextos[b.id] || 'Texto';
       const ta = document.createElement('textarea'); ta.rows = 6; ta.value = borrador.textos[b.id] || '';
-      ta.addEventListener('input', () => { borrador.textos[b.id] = ta.value; guardarBorrador(); });
+      ta.addEventListener('input', () => { borrador.textos[b.id] = ta.value; guardarBorrador(); pintarLeyenda(); });
       const r = document.createElement('button'); r.className = 'sec chico'; r.textContent = 'Restaurar texto original';
-      r.addEventListener('click', () => { ta.value = borrador.textos[b.id] = defActual().textos[b.id]; guardarBorrador(); });
+      r.addEventListener('click', () => { ta.value = borrador.textos[b.id] = defActual().textos[b.id]; guardarBorrador(); pintarLeyenda(); });
       cont.append(l, ta, r);
     } else {
       if (b.titulo) { const h = document.createElement('h3'); h.textContent = b.titulo; cont.appendChild(h); }
       b.slots.forEach(s => cont.appendChild(filaFoto(s)));
     }
   });
-  mostrar('pSeccion');
+  pintarLeyenda(); mostrar('pSeccion');
 }
 function filaFoto(s) {
   const d = document.createElement('div'); d.className = 'slot'; d.dataset.slot = s.id;
@@ -179,7 +203,7 @@ async function armarCuerpo() {
   return {
     intro: { parrafos: ['intro1', 'intro2', 'intro3'].map(k => (tx[k] || '').trim()).filter(Boolean), fotos: presentes(introSlots).map(s => ({ foto: F[s.id], pie: s.pie })) },
     materiales: d.materiales,
-    pasos: d.pasos.map(p => ({ titulo: p.titulo, bloques: p.secciones.flatMap(s => s.bloques.flatMap(aDoc)), opcional: p.opcional })).filter(p => !p.opcional || p.bloques.length),
+    pasos: d.pasos.map(p => ({ titulo: p.titulo, bloques: p.secciones.flatMap(s => s.bloques.flatMap(b => esNA(s) && b.tipo !== 'texto' ? [] : aDoc(b))), opcional: p.opcional })).filter(p => !p.opcional || p.bloques.length),
     observaciones: tx.obs, conclusion: tx.concl, solicitud: F.solicitud || null
   };
 }
