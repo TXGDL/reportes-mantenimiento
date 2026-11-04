@@ -4,8 +4,8 @@ let slotActual = null, seccionActual = null;
 
 const defActual = () => (ANEXO_DEF_EST[sesion.estacionId] || {})[reporte.anexo];
 const guardarBorrador = () => LS.set('rm_borrador', borrador);
-function nuevoBorrador() { borrador = { anexo: reporte.anexo, textos: Object.assign({}, defActual().textos), fotos: {}, valores: {}, na: {} }; guardarBorrador(); }
-function asegurarBorrador() { if (borrador === null) borrador = LS.get('rm_borrador'); if (!borrador || borrador.anexo !== reporte.anexo) nuevoBorrador(); if (!borrador.na) borrador.na = {}; }
+function nuevoBorrador() { borrador = { anexo: reporte.anexo, textos: Object.assign({}, defActual().textos), fotos: {}, valores: {}, na: {}, naFoto: {} }; guardarBorrador(); }
+function asegurarBorrador() { if (borrador === null) borrador = LS.get('rm_borrador'); if (!borrador || borrador.anexo !== reporte.anexo) nuevoBorrador(); if (!borrador.na) borrador.na = {}; if (!borrador.naFoto) borrador.naFoto = {}; }
 const esPaso = sec => defActual().pasos.some(p => p.secciones.includes(sec));
 const esNA = sec => !!(borrador.na && borrador.na[sec.id]);
 
@@ -19,7 +19,7 @@ function todasLasSecciones() {
 const slotsDe = sec => sec.bloques.filter(b => b.tipo === 'fotos').flatMap(b => b.slots);
 function estadoSeccion(sec) {
   const sl = slotsDe(sec), conNum = sl.filter(s => s.unidad);
-  const f = sl.filter(s => borrador.fotos[s.id]).length, n = conNum.filter(s => (borrador.valores[s.id] || '').trim() !== '').length;
+  const f = sl.filter(s => borrador.fotos[s.id] || borrador.naFoto[s.id]).length, n = conNum.filter(s => borrador.naFoto[s.id] || (borrador.valores[s.id] || '').trim() !== '').length;
   const na = esNA(sec);
   return { f, ft: sl.length, n, nt: conNum.length, na, completo: na || (f === sl.length && n === conNum.length) };
 }
@@ -91,7 +91,7 @@ function filaFoto(s) {
     : '<button class="chico cam">📷 Cámara</button><button class="chico sec gal">🖼 Galería</button>';
   d.innerHTML = `<div class="mini"><span>Sin foto</span></div><div class="info"><div class="et"></div><div class="num"></div>
     <div class="hint"></div><div class="bots">${botones}</div>
-    <div class="bots giro"><button class="chico sec izq" aria-label="Girar a la izquierda" disabled>↺ Girar</button><button class="chico sec der" aria-label="Girar a la derecha" disabled>Girar ↻</button><button class="chico sec bor" aria-label="Borrar la foto" disabled>🗑 Borrar</button></div></div>`;
+    <div class="bots giro"><button class="chico sec izq" aria-label="Girar a la izquierda" disabled>↺ Girar</button><button class="chico sec der" aria-label="Girar a la derecha" disabled>Girar ↻</button><button class="chico sec bor" aria-label="Borrar la foto" disabled>🗑 Borrar</button><button class="chico sec nafoto">🚫 No aplica</button></div></div>`;
   d.querySelector('.et').textContent = s.etiqueta;
   if (s.unidad) {
     const i = document.createElement('input'); i.type = 'text'; i.inputMode = 'decimal'; i.placeholder = 'Valor'; i.value = borrador.valores[s.id] || '';
@@ -106,20 +106,27 @@ function filaFoto(s) {
   d.querySelector('.izq').addEventListener('click', () => girarFoto(s.id, -90));
   d.querySelector('.der').addEventListener('click', () => girarFoto(s.id, 90));
   d.querySelector('.bor').addEventListener('click', () => borrarFoto(s.id));
+  d.querySelector('.nafoto').addEventListener('click', () => {
+    if (borrador.fotos[s.id]) return;
+    if (borrador.naFoto[s.id]) delete borrador.naFoto[s.id]; else borrador.naFoto[s.id] = true;
+    guardarBorrador(); pintarMiniatura(d, s.id);
+  });
   d.querySelector('.mini').addEventListener('click', () => { if (borrador.fotos[s.id]) abrirVisor(s.id); });
   pintarMiniatura(d, s.id); return d;
 }
 async function pintarMiniatura(fila, id) {
-  const m = fila.querySelector('.mini'), u = borrador.fotos[id] ? await Fotos.url(id) : null;
-  m.innerHTML = u ? `<img alt="">` : '<span>Sin foto</span>'; if (u) m.querySelector('img').src = u;
+  const m = fila.querySelector('.mini'), u = borrador.fotos[id] ? await Fotos.url(id) : null, na = !u && !!borrador.naFoto[id];
+  m.innerHTML = u ? `<img alt="">` : (na ? '<span>No aplica</span>' : '<span>Sin foto</span>');
+  fila.classList.toggle('na', na);
+  const nb = fila.querySelector('.nafoto'); if (nb) { nb.textContent = na ? '↩ Quitar “No aplica”' : '🚫 No aplica'; nb.disabled = !!u; } if (u) m.querySelector('img').src = u;
   const cam = fila.querySelector('.cam'); if (cam) cam.textContent = u ? '📷 Repetir' : '📷 Cámara';
   const drv = fila.querySelector('.drv'); if (drv) drv.textContent = u ? '📁 Cambiar' : '📁 Elegir de Drive';
-  const hint = fila.querySelector('.hint'); if (hint && u && borrador.fotos[id].nombre) hint.textContent = 'Elegida: ' + borrador.fotos[id].nombre; fila.querySelectorAll('.giro button').forEach(b => b.disabled = !u);
+  const hint = fila.querySelector('.hint'); if (hint && u && borrador.fotos[id].nombre) hint.textContent = 'Elegida: ' + borrador.fotos[id].nombre; fila.querySelectorAll('.giro button:not(.nafoto)').forEach(b => b.disabled = !u);
   if (!u && hint) { const sd = slotPorId(id); if (sd && sd.origen === 'drive') hint.textContent = pistaSolicitud(sd); }
 }
 const slotPorId = id => todasLasSecciones().flatMap(x => slotsDe(x.sec)).find(s => s.id === id);
 async function agregarFoto(id, file) {
-  const def = slotPorId(id), dim = def && def.original ? await Fotos.guardarOriginal(id, await Fotos.leerBytes(file), file.type) : await Fotos.guardar(id, file); borrador.fotos[id] = dim; guardarBorrador();
+  const def = slotPorId(id), dim = def && def.original ? await Fotos.guardarOriginal(id, await Fotos.leerBytes(file), file.type) : await Fotos.guardar(id, file); borrador.fotos[id] = dim; delete borrador.naFoto[id]; guardarBorrador();
   const fila = document.querySelector(`.slot[data-slot="${id}"]`); if (fila) pintarMiniatura(fila, id);
 }
   // ---------- Elegir un archivo desde Drive (solicitud) ----------
@@ -144,7 +151,7 @@ async function elegirDeDrive(s) {
     if (r.carpetaId) LS.set('rm_carpeta_sol', r.carpetaId);       // la próxima vez abre directo en esta carpeta
     aviso('Guardando la imagen…', 60000);
     const dim = await Fotos.guardarOriginal(s.id, r.bytes, r.tipo);
-    borrador.fotos[s.id] = Object.assign({}, dim, { nombre: r.nombre }); guardarBorrador();
+    borrador.fotos[s.id] = Object.assign({}, dim, { nombre: r.nombre }); delete borrador.naFoto[s.id]; guardarBorrador();
     const fila = document.querySelector(`.slot[data-slot="${s.id}"]`); if (fila) pintarMiniatura(fila, s.id);
     aviso('Listo ✓ ' + r.nombre, 3500);
   } catch (err) { console.error(err); aviso((err && err.message) || String(err), 12000, true); }
@@ -196,7 +203,7 @@ async function armarCuerpo() {
     if (b.individual) return presentes(b.slots).map(s => ({ foto: F[s.id], pie: s.pie }));
     const out = [], ps = presentes(b.slots);
     if (ps.length) { const v = b.valorEnPie ? (borrador.valores[b.slots[0].id] || '').trim() : ''; out.push({ fotos: ps.map(s => F[s.id]), pie: b.pie + (v ? ` (${v.replace(',', '.')} ${b.slots[0].unidad})` : '') }); }
-    if (b.tabla) out.push({ tabla: { etiqueta: b.tabla.etiqueta, terminales: b.slots.map(s => s.etiqueta), valores: b.slots.map(s => fmtValor(borrador.valores[s.id], s.unidad)) }, pie: b.tabla.pie });
+    if (b.tabla) out.push({ tabla: { etiqueta: b.tabla.etiqueta, terminales: b.slots.map(s => s.etiqueta), valores: b.slots.map(s => borrador.naFoto[s.id] ? 'N/A' : fmtValor(borrador.valores[s.id], s.unidad)) }, pie: b.tabla.pie });
     return out;
   };
   const introSlots = d.intro.secciones.flatMap(s => s.bloques.filter(b => b.tipo === 'fotos').flatMap(b => b.slots));
