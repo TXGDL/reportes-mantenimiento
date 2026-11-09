@@ -203,6 +203,9 @@ async function armarCuerpo() {
   const d = defActual(), tx = borrador.textos, F = {};
   for (const id of Object.keys(borrador.fotos)) { const b = await Fotos.obtener(id); if (b) F[id] = { data: new Uint8Array(await b.arrayBuffer()), w: borrador.fotos[id].w, h: borrador.fotos[id].h }; }
   const presentes = sl => sl.filter(s => F[s.id]);
+  // Imágenes fijas de la introducción (vienen incluidas en la app)
+  const fijas = [];
+  for (const x of (d.intro.fijas || [])) { try { const r = await fetch(x.src); if (r.ok) fijas.push({ foto: { data: new Uint8Array(await r.arrayBuffer()), w: x.w, h: x.h }, pie: x.pie }); } catch (e) {} }
   const aDoc = b => {
     if (b.tipo === 'texto') return (tx[b.id] || '').trim() ? [{ texto: tx[b.id].trim() }] : [];
     if (b.individual) return presentes(b.slots).map(s => ({ foto: F[s.id], pie: s.pie }));
@@ -213,7 +216,7 @@ async function armarCuerpo() {
   };
   const introSlots = d.intro.secciones.flatMap(s => s.bloques.filter(b => b.tipo === 'fotos').flatMap(b => b.slots));
   return {
-    intro: { parrafos: ['intro1', 'intro2', 'intro3'].map(k => (tx[k] || '').trim()).filter(Boolean), fotos: presentes(introSlots).map(s => ({ foto: F[s.id], pie: s.pie })) },
+    intro: { parrafos: ['intro1', 'intro2', 'intro3'].map(k => (tx[k] || '').trim()).filter(Boolean), fotos: [...fijas, ...presentes(introSlots).map(s => ({ foto: F[s.id], pie: s.pie }))] },
     materiales: d.materiales,
     pasos: d.pasos.map(p => ({ titulo: p.titulo, bloques: p.secciones.flatMap(s => s.bloques.flatMap(b => esNA(s) && b.tipo !== 'texto' ? [] : aDoc(b))), opcional: p.opcional })).filter(p => !p.opcional || p.bloques.length),
     observaciones: tx.obs, conclusion: tx.concl, solicitud: F.solicitud || null

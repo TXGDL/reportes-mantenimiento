@@ -9,7 +9,7 @@ const ANEXOS = [
   { n: 11, titulo: 'Mantenimiento al regulador de voltaje', disponible: true },
   { n: 12, titulo: 'Mantenimiento a los equipos en el rack' },
   { n: 13, titulo: 'Mantenimiento a cables, conectores y rack' },
-  { n: 14, titulo: 'Mantenimiento al deshidratador de línea' },
+  { n: 14, titulo: 'Mantenimiento al deshidratador de línea', disponible: true },
   { n: 15, titulo: 'Mantenimiento general al transmisor', disponible: true },
   { n: 16, titulo: 'Mantenimiento al sistema de enfriamiento', disponible: true },
   { n: 17, titulo: 'Mantenimiento a la instalación eléctrica', disponible: true },
