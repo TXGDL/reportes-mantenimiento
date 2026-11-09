@@ -24,6 +24,7 @@
     n: 17,
     materiales: ['Desarmadores', 'Guantes de carnaza', 'Multímetro', 'Amperímetro de gancho', 'Deshumidificante', 'Termómetro láser', 'Sopladora de aire'],
     textos: {
+      pX: '',
       intro1: 'El mantenimiento del sistema eléctrico consta de la revisión del cableado eléctrico y de asegurarse de que las conexiones estén bien apretadas; de requerirse, se realiza el reapriete de dichas conexiones en todos los tableros eléctricos. Posteriormente se realiza la limpieza del tablero correspondiente. Para esta actividad se tiene una ventana de mantenimiento sin energía eléctrica. Una vez realizado lo anterior y después de la energización del sistema, se procede a tomar lecturas de voltaje y corriente en los tableros, verificando que no exista desbalance en los consumos de corriente.',
       p1: 'Antes de iniciar el mantenimiento se fueron apagando las pastillas de los contactos que se iban a revisar, para evitar descargas al personal. Después se removió la tornillería de tableros, supresores y breakers.',
       p2: 'Se realiza inspección visual a todos los componentes internos, encontrándose en buen estado.',
@@ -36,7 +37,7 @@
       obs: 'Mantenimiento realizado sin observaciones',
       concl: 'La instalación eléctrica se encuentra en buen estado.'
     },
-    etiquetasTextos: { intro1: 'Introducción', p1: 'Texto del paso 1', p2: 'Texto del paso 2', p3: 'Texto del paso 3', p4: 'Texto del paso 4', p5: 'Texto del paso 5', p6: 'Texto del paso 6', p7: 'Texto del paso 7', p8: 'Texto del paso 8', obs: 'Observaciones', concl: 'Conclusión' },
+    etiquetasTextos: { pX: 'Texto de trabajos adicionales', intro1: 'Introducción', p1: 'Texto del paso 1', p2: 'Texto del paso 2', p3: 'Texto del paso 3', p4: 'Texto del paso 4', p5: 'Texto del paso 5', p6: 'Texto del paso 6', p7: 'Texto del paso 7', p8: 'Texto del paso 8', obs: 'Observaciones', concl: 'Conclusión' },
     intro: { secciones: [{ id: 'intro', titulo: 'Introducción', bloques: [
       { tipo: 'texto', id: 'intro1' },
       ind('f_intro', [['diag', 'Diagrama eléctrico de la estación', 'Diagrama eléctrico de la estación'], ['herr', 'Herramientas usadas', 'Herramientas usadas en este mantenimiento']])
@@ -60,7 +61,9 @@
       { id: 'p7', titulo: 'Colocar las tapas de los tableros, supresores de picos, breakers, entre otros', secciones: [{ id: 's7', titulo: 'Cierre de tapas', bloques: [{ tipo: 'texto', id: 'p7' },
         { tipo: 'fotos', id: 'cierre', titulo: 'Cierre de tapas', pie: 'Cierre de tapas', tabla: null, slots: [1, 2, 3].map(i => ({ id: `cierre_${i}`, etiqueta: `Tapas colocadas ${i}` })) }] }] },
       { id: 'p8', titulo: 'Energizar la instalación', secciones: [{ id: 's8', titulo: 'Energizar la instalación', bloques: [{ tipo: 'texto', id: 'p8' },
-        { tipo: 'fotos', id: 'energ', individual: true, slots: [{ id: 'energ_0', etiqueta: 'Instalación energizada (opcional)', pie: 'Reenergizado de la instalación' }] }] }] }
+        { tipo: 'fotos', id: 'energ', individual: true, slots: [{ id: 'energ_0', etiqueta: 'Instalación energizada (opcional)', pie: 'Reenergizado de la instalación' }] }] }] },
+      { id: 'pX', opcional: true, titulo: 'Trabajos adicionales / hallazgos (solo si los hubo)', secciones: [{ id: 'sX', titulo: 'Trabajos adicionales', bloques: [{ tipo: 'texto', id: 'pX' },
+        { tipo: 'fotos', id: 'extra', titulo: 'Adicional', pie: 'Trabajos adicionales', tabla: null, slots: [1, 2, 3, 4, 5, 6].map(i => ({ id: `extra_${i}`, etiqueta: `Foto ${i}` })) }] }] }
     ],
     cierre: { secciones: [
       { id: 'concl', titulo: 'Conclusiones', bloques: [{ tipo: 'texto', id: 'obs' }, { tipo: 'texto', id: 'concl' }] },

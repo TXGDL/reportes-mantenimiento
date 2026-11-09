@@ -22,6 +22,7 @@
     n: 10,
     materiales: ['Desarmador', 'Llave ajustable (inglesa)', 'Termómetro', 'Amperímetro de gancho', 'Multímetro', 'Sopladora', 'Guantes aislantes'],
     textos: {
+      pX: '',
       intro1: 'Como parte del mantenimiento periódico a los equipos de transmisión de nuestra estación y siendo una sección esencial en la alimentación de nuestros transmisores, se realiza el mantenimiento al transformador de aislamiento.',
       intro2: 'El transformador de canal 20 cuenta con un transformador seco de arreglo delta estrella de 3 fases, es de 75kva a 60hz.',
       intro3: 'El transformador de canal 23 cuenta con un transformador seco de arreglo delta estrella de 3 fases, es de 30kva a 60hz.',
@@ -34,7 +35,7 @@
       obs: 'Mantenimiento realizado sin observaciones',
       concl: 'Las temperaturas, los voltajes y corrientes se encuentran en valores normales, por lo que se decidió cerrar las tapas de ambos transformadores y se dejaron en operación.'
     },
-    etiquetasTextos: { intro1: 'Introducción', intro2: 'Introducción: canal 20', intro3: 'Introducción: canal 23', p1: 'Texto del paso 1', p2: 'Texto del paso 2', p3: 'Texto del paso 3', p4: 'Texto del paso 4', p5: 'Texto del paso 5', p6: 'Texto del paso 6', obs: 'Observaciones', concl: 'Conclusión' },
+    etiquetasTextos: { pX: 'Texto de trabajos adicionales', intro1: 'Introducción', intro2: 'Introducción: canal 20', intro3: 'Introducción: canal 23', p1: 'Texto del paso 1', p2: 'Texto del paso 2', p3: 'Texto del paso 3', p4: 'Texto del paso 4', p5: 'Texto del paso 5', p6: 'Texto del paso 6', obs: 'Observaciones', concl: 'Conclusión' },
     intro: { secciones: [{ id: 'intro', titulo: 'Introducción y placas', bloques: [
       { tipo: 'texto', id: 'intro1' }, { tipo: 'texto', id: 'intro2' }, { tipo: 'texto', id: 'intro3' },
       { tipo: 'fotos', id: 'f_intro', individual: true, slots: CANALES.map(c => ({ id: `placa${c}`, etiqueta: `Placa del transformador CH${c}`, pie: `Información de transformador de aislamiento canal ${c}` })) }
@@ -49,7 +50,9 @@
         { id: 's5_20', titulo: 'Lecturas del transformador CH20', bloques: [{ tipo: 'texto', id: 'p5' }, ...lecturasCanal('20')] },
         { id: 's5_23', titulo: 'Lecturas del transformador CH23', bloques: lecturasCanal('23') }] },
       { id: 'p6', titulo: 'Colocar la tapa protectora del equipo', secciones: [{ id: 's6', titulo: 'Cierre de tapas', bloques: [
-        { tipo: 'texto', id: 'p6' }, { tipo: 'fotos', id: 'f6', individual: true, slots: [{ id: 'cierre_0', etiqueta: 'Tapas colocadas', pie: 'Colocación de tapas después del mantenimiento' }] }] }] }
+        { tipo: 'texto', id: 'p6' }, { tipo: 'fotos', id: 'f6', individual: true, slots: [{ id: 'cierre_0', etiqueta: 'Tapas colocadas', pie: 'Colocación de tapas después del mantenimiento' }] }] }] },
+      { id: 'pX', opcional: true, titulo: 'Trabajos adicionales / hallazgos (solo si los hubo)', secciones: [{ id: 'sX', titulo: 'Trabajos adicionales', bloques: [{ tipo: 'texto', id: 'pX' },
+        { tipo: 'fotos', id: 'extra', titulo: 'Adicional', pie: 'Trabajos adicionales', tabla: null, slots: [1, 2, 3, 4, 5, 6].map(i => ({ id: `extra_${i}`, etiqueta: `Foto ${i}` })) }] }] }
     ],
     cierre: { secciones: [
       { id: 'concl', titulo: 'Conclusiones', bloques: [{ tipo: 'texto', id: 'obs' }, { tipo: 'texto', id: 'concl' }] },

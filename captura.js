@@ -20,6 +20,8 @@ const slotsDe = sec => sec.bloques.filter(b => b.tipo === 'fotos').flatMap(b => 
 function estadoSeccion(sec) {
   const sl = slotsDe(sec), conNum = sl.filter(s => s.unidad);
   const f = sl.filter(s => borrador.fotos[s.id] || borrador.naFoto[s.id]).length, n = conNum.filter(s => borrador.naFoto[s.id] || (borrador.valores[s.id] || '').trim() !== '').length;
+  // Paso opcional (trabajos adicionales): siempre cuenta como completo, aunque quede vacío
+  if (defActual().pasos.some(p => p.opcional && p.secciones.includes(sec))) return { f, ft: f, n, nt: n, na: false, opc: true, completo: true };
   const na = esNA(sec);
   return { f, ft: sl.length, n, nt: conNum.length, na, completo: na || (f === sl.length && n === conNum.length) };
 }
@@ -34,7 +36,7 @@ function pantallaCaptura() {
   todasLasSecciones().forEach(({ sec, nombre }) => {
     const e = estadoSeccion(sec), b = document.createElement('button');
     b.className = 'seccion' + (e.completo ? ' ok' : '');
-    const partes = []; if (e.na) partes.push('No aplica'); else if (e.ft) partes.push(`${e.f}/${e.ft} fotos`); if (!e.na && e.nt) partes.push(`${e.n}/${e.nt} lecturas`);
+    const partes = []; if (e.opc && !e.f) partes.push('Opcional'); else if (e.na) partes.push('No aplica'); else if (e.ft) partes.push(`${e.f}/${e.ft} fotos`); if (!e.na && e.nt) partes.push(`${e.n}/${e.nt} lecturas`);
     b.innerHTML = `<span class="marca">${e.completo ? '✓' : '○'}</span><span class="nom"></span><small></small>`;
     b.querySelector('.nom').textContent = nombre; b.querySelector('small').textContent = partes.join(' · ');
     b.addEventListener('click', () => pantallaSeccion(sec, nombre)); cont.appendChild(b);
@@ -52,13 +54,15 @@ function pantallaSeccion(sec, nombre) {
   const pintarLeyenda = () => {
     if (!leyenda) return;
     const on = esNA(sec); leyenda.hidden = !on; if (!on) return;
+    const esOpc = defActual().pasos.some(p => p.opcional && p.secciones.includes(sec));
     const igual = sec.bloques.filter(b => b.tipo === 'texto').every(b => (borrador.textos[b.id] || '').trim() === (defActual().textos[b.id] || '').trim());
-    leyenda.className = 'aviso-na' + (igual ? ' alerta' : '');
+    leyenda.className = 'aviso-na' + (igual && !esOpc ? ' alerta' : '');
     leyenda.textContent = igual
-      ? '⚠ Justifica en el texto de este paso por qué no se realizó o no hay fotografías (ahora tiene el texto original). Ese texto es el que saldrá en el reporte.'
+      ? esOpc ? '' : '⚠ Justifica en el texto de este paso por qué no se realizó o no hay fotografías (ahora tiene el texto original). Ese texto es el que saldrá en el reporte.'
       : '✓ Este paso saldrá en el reporte solo con tu texto, sin fotografías.';
+    leyenda.hidden = !leyenda.textContent;
   };
-  if (esPaso(sec)) {
+  if (esPaso(sec) && !defActual().pasos.some(p => p.opcional && p.secciones.includes(sec))) {
     const l = document.createElement('label'); l.className = 'chk na';
     const c = document.createElement('input'); c.type = 'checkbox'; c.checked = esNA(sec);
     c.addEventListener('change', () => {
