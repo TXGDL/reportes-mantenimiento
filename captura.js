@@ -17,14 +17,16 @@ function todasLasSecciones() {
   return L;
 }
 const slotsDe = sec => sec.bloques.filter(b => b.tipo === 'fotos').flatMap(b => b.slots);
+const filasLec = sec => sec.bloques.filter(b => b.tipo === 'lecturas').flatMap(b => b.filas.map(r => b.id + '_' + r[0]));
+const valLec = (k, i) => (borrador.valores[k + '_' + i] || '').trim();
 function estadoSeccion(sec) {
-  const sl = slotsDe(sec), conNum = sl.filter(s => s.unidad);
-  const f = sl.filter(s => borrador.fotos[s.id] || borrador.naFoto[s.id]).length, n = conNum.filter(s => borrador.naFoto[s.id] || (borrador.valores[s.id] || '').trim() !== '').length;
+  const sl = slotsDe(sec), conNum = sl.filter(s => s.unidad), fl = filasLec(sec);
+  const f = sl.filter(s => borrador.fotos[s.id] || borrador.naFoto[s.id]).length, n = conNum.filter(s => borrador.naFoto[s.id] || (borrador.valores[s.id] || '').trim() !== '').length + fl.filter(k => valLec(k, 'a') && valLec(k, 'b')).length;
   // Paso opcional (trabajos adicionales): se completa con "No aplica" o con al menos una foto o texto
   const opc = defActual().pasos.some(p => p.opcional && p.secciones.includes(sec));
   if (opc && !esNA(sec) && (f > 0 || sec.bloques.some(b => b.tipo === 'texto' && (borrador.textos[b.id] || '').trim()))) return { f, ft: f, n, nt: n, na: false, completo: true };
   const na = esNA(sec);
-  return { f, ft: sl.length, n, nt: conNum.length, na, completo: na || (f === sl.length && n === conNum.length) };
+  return { f, ft: sl.length, n, nt: conNum.length + fl.length, na, completo: na || (f === sl.length && n === conNum.length + fl.length) };
 }
 function totales() {
   return todasLasSecciones().reduce((t, x) => { const e = estadoSeccion(x.sec); if (e.na) return t; t.f += e.f; t.ft += e.ft; t.n += e.n; t.nt += e.nt; return t; }, { f: 0, ft: 0, n: 0, nt: 0 });
@@ -82,6 +84,17 @@ function pantallaSeccion(sec, nombre) {
       const r = document.createElement('button'); r.className = 'sec chico'; r.textContent = 'Restaurar texto original';
       r.addEventListener('click', () => { ta.value = borrador.textos[b.id] = defActual().textos[b.id]; guardarBorrador(); pintarLeyenda(); });
       cont.append(l, ta, r);
+    } else if (b.tipo === 'lecturas') {
+      const h = document.createElement('h3'); h.textContent = b.pie; cont.appendChild(h);
+      b.filas.forEach(r => {
+        const k = b.id + '_' + r[0], d = document.createElement('div'); d.className = 'filalec';
+        const n = document.createElement('div'); n.className = 'et'; n.textContent = r[1]; d.appendChild(n);
+        ['a', 'b'].forEach((q, j) => {
+          const i = document.createElement('input'); i.type = 'text'; i.inputMode = 'text'; i.placeholder = b.cols[j + 1]; i.value = borrador.valores[k + '_' + q] || '';
+          i.addEventListener('input', () => { borrador.valores[k + '_' + q] = i.value; guardarBorrador(); }); d.appendChild(i);
+        });
+        cont.appendChild(d);
+      });
     } else {
       if (b.titulo) { const h = document.createElement('h3'); h.textContent = b.titulo; cont.appendChild(h); }
       b.slots.forEach(s => cont.appendChild(filaFoto(s)));
@@ -208,6 +221,7 @@ async function armarCuerpo() {
   for (const x of (d.intro.fijas || [])) { try { const r = await fetch(x.src); if (r.ok) fijas.push({ foto: { data: new Uint8Array(await r.arrayBuffer()), w: x.w, h: x.h }, pie: x.pie }); } catch (e) {} }
   const aDoc = b => {
     if (b.tipo === 'texto') return (tx[b.id] || '').trim() ? [{ texto: tx[b.id].trim() }] : [];
+    if (b.tipo === 'lecturas') return [{ tablaR: { cols: b.cols, filas: b.filas.map(r => [r[1], valLec(b.id + '_' + r[0], 'a') || '—', valLec(b.id + '_' + r[0], 'b') || '—']) }, pie: b.pie }];
     if (b.individual) return presentes(b.slots).map(s => ({ foto: F[s.id], pie: s.pie }));
     const out = [], ps = presentes(b.slots);
     if (ps.length) { const v = b.valorEnPie ? (borrador.valores[b.slots[0].id] || '').trim() : ''; out.push({ fotos: ps.map(s => F[s.id]), pie: b.pie + (v ? ` (${v.replace(',', '.')} ${b.slots[0].unidad})` : '') }); }

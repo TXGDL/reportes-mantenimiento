@@ -31,7 +31,7 @@
       L.push('Hora inicio de mantenimiento: ' + hora12(d.hi_raw));
       L.push('Hora final de mantenimiento: ' + hora12(d.hf_raw));
       L.push('Intervalo de mantenimiento: ' + intervalo(d.hi_raw, d.hf_raw));
-    } else L.push(`El mantenimiento inició a las ${d.hora_inicio} y terminó a las ${d.hora_fin}`);
+    } else if (d.formato_concl !== 'sin_horario') L.push(`El mantenimiento inició a las ${d.hora_inicio} y terminó a las ${d.hora_fin}`);
     if (cc) L.push(cc);
     return L.join('\n');
   }
@@ -63,6 +63,7 @@
             return o;
           });
         }
+        if (b.tablaR) return [{ es_tablaR: true, h1: b.tablaR.cols[0], h2: b.tablaR.cols[1], h3: b.tablaR.cols[2], filas: b.tablaR.filas.map(r => ({ c1: r[0], c2: r[1], c3: r[2] })), leyenda: `Tabla ${++tab}. ${b.pie} (${corta})` }];
         const t = b.tabla, n = t.terminales.length;
         const o = { ['es_tabla' + n]: true, etiqueta: t.etiqueta, leyenda: `Tabla ${++tab}. ${b.pie} (${corta})` };
         t.terminales.forEach((x, i) => { o['t' + (i + 1)] = x; o['v' + (i + 1)] = t.valores[i]; });
