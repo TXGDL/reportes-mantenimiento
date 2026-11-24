@@ -1,0 +1,16 @@
+// Tepic · Anexo 18: Mantenimiento a los tanques de diésel (reporte 21 de Tepic)
+(function () {
+  const { ind, grp, def } = AX;
+  def(18, {
+    titulo: "MANTENIMIENTO A LOS TANQUES DE DIÉSEL", formato: "tepic", sinExtra: true,
+    mat: ["Franela", "Desengrasante", "Pintura negra", "Thinner", "Brochas", "Agua", "Cepillo de alambre", "Guantes", "Protectores de plástico", "Escoba", "Recogedor"],
+    intro: ["Es primordial tener en la estación el suministro suficiente de diésel para mantener en operación ante cualquier eventualidad que pueda presentarse en la estación y requiera el uso continuo de la planta de emergencia. Por lo cual es necesario prolongar el estado físico de los tanques, las mangueras, tuberías y conexiones. El objetivo principal del mantenimiento es hacer inspección visual de los tanques, posteriormente realizar limpieza del interior y exterior de los tanques."],
+    pasos: [
+    { t: "Limpieza externa a los tanques de diésel", x: "Debido a que los tanques de diésel están casi llenos, no se puede realizar la limpieza interna de estos. Se procede a limpiar el exterior de los tanques con ayuda de franelas y desengrasante.", b: [grp("g1", "Medidor de tanque de 500L en 95% y medidor de tanque de 1000L en 100%.", 2, 'Foto'), grp("g2", "Estado de los tanques de almacenamiento antes del mantenimiento.", 4, 'Foto'), grp("g3", "Limpieza exterior del tanque de 500L con franela y desengrasante.", 6, 'Foto'), grp("g4", "Limpieza exterior de tanque de 1000L con franela y desengrasante.", 6, 'Foto'), grp("g5", "Se purgan ambos tanques de diésel, se extrae aproximadamente 1L a cada tanque, se desecha ese diésel al contener el agua acumulada.", 4, 'Foto')] },
+    { t: "Limpieza del dique de contención", x: "Se barre el dique, se lava con agua y jabón, se saca toda la basura que hay.", b: [grp("g1", "Se barre el dique con escoba y cepillo.", 4, 'Foto'), grp("g2", "Se lava el dique, se barre y se extrae el agua sucia.", 6, 'Foto')] },
+    { t: "Pintado de la tubería de diésel de los tanques externos", x: "Se raspa la tubería con cepillo de alambre, posteriormente se limpia con franela. Se aplica una capa de pintura negra con ayuda de una brocha y usando debajo de la tubería un protector de plástico para evitar manchas en la banqueta.", b: [grp("g1", "Estado de la tubería del diésel antes del mantenimiento.", 4, 'Foto'), grp("g2", "Limpieza de la tubería con cepillo de alambre, franela y Thinner.", 6, 'Foto'), grp("g3", "Aplicación con brocha de pintura negra en la tubería de diésel.", 6, 'Foto'), grp("g4", "Más del proceso de pintado de la tubería.", 6, 'Foto')] },
+    { t: "Revisión del aterrizamiento", x: "Se revisa el cableado, conexiones y electrodos de la puesta a tierra de los tanques de diésel.", b: [grp("g1", "Elementos de puesta a tierra en buen estado.", 4, 'Foto'), grp("g2", "Dique y tanques de diésel después del mantenimiento.", 4, 'Foto'), grp("g3", "Tubería de diésel después del mantenimiento.", 4, 'Foto')] }
+    ],
+    obs: "Mantenimiento a los tanques de diésel realizado con observaciones. No se puede realizar la limpieza interna de los tanques debido a que cuentan con gran cantidad de diésel almacenado en su interior y no tenemos donde poder vaciar los tanques.", concl: ""
+  }, 'tepic');
+})();

@@ -13,8 +13,14 @@ function aviso(msg, ms = 3500, error = false) {
 }
 $('version').textContent = 'v' + VERSION;
 const SUF_PROG = { 18: ' (Primer servicio)', 19: ' (Primer servicio)', 20: ' (Primer servicio)', 40: ' (Segundo servicio)', 41: ' (Único servicio anual)' };
-const nombreCorto = (titulo, n) => { const x = titulo.replace(/^Mantenimiento /i, '').replace(/^(a los |a las |a la |al |a )/i, ''); return x.charAt(0).toUpperCase() + x.slice(1) + (SUF_PROG[n] || ''); };
-function tituloReporte() { const ax = ANEXOS.find(x => String(x.n) === reporte.anexo); return ax && reporte.numero ? `${reporte.numero} · ${nombreCorto(ax.titulo, Number(reporte.programa) || 0)}` : ''; }
+const nombreCorto = (titulo, n) => { const x = titulo.replace(/^Mantenimiento /i, '').replace(/^(a los |a las |a la |al |a )/i, ''); return x.charAt(0).toUpperCase() + x.slice(1) + ((!PROGRAMA_EST[sesion.estacionId] && SUF_PROG[n]) || ''); };
+// Título del anexo según la oficina (Tepic usa los nombres de sus propios reportes)
+function tituloDe(n) {
+  const d = (ANEXO_DEF_EST[sesion.estacionId] || {})[n], ax = ANEXOS.find(x => x.n === Number(n));
+  if (d && d.titulo) { const t = d.titulo.toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); }
+  return ax ? ax.titulo : '';
+}
+function tituloReporte() { const ax = ANEXOS.find(x => String(x.n) === reporte.anexo); return ax && reporte.numero ? `${reporte.numero} · ${nombreCorto(tituloDe(ax.n), Number(reporte.programa) || 0)}` : ''; }
 const PANTALLAS = ['pConfig', 'pInicio', 'pReporte', 'pCaptura', 'pSeccion', 'pResumen'];
 function mostrar(id) {
   PANTALLAS.forEach(p => $(p).hidden = p !== id);
@@ -93,13 +99,13 @@ $('btnLogout').addEventListener('click', () => {
 
 // ---------- Datos del reporte ----------
 $('selPrograma').addEventListener('change', () => {
-  const f = PROGRAMA.find(x => String(x[0]) === $('selPrograma').value); if (!f) return;
+  const f = programaActual().find(x => String(x[0]) === $('selPrograma').value); if (!f) return;
   $('inNumero').value = f[0];
   if (!hayDef(f[2])) aviso('Ese mantenimiento todavía no está en la app.');
 });
 function pantallaReporte() {
-  const nom = n => ANEXOS.find(a => a.n === n), oficial = (n, ax) => nombreCorto(nom(ax).titulo, n);
-  opciones($('selPrograma'), [['', '— Elegir mantenimiento —'], ...PROGRAMA.map(([n, mes, ax]) => [String(n), `${n} · ${oficial(n, ax)}${hayDef(ax) ? '' : ' (próximamente)'}`])], reporte.programa || '');
+  const nom = n => ANEXOS.find(a => a.n === n), oficial = (n, ax) => nombreCorto(tituloDe(ax), n);
+  opciones($('selPrograma'), [['', '— Elegir mantenimiento —'], ...programaActual().map(([n, mes, ax]) => [String(n), `${n} · ${oficial(n, ax)}${hayDef(ax) ? '' : ' (próximamente)'}`])], reporte.programa || '');
   $('inNumero').value = reporte.numero || ''; $('inFecha').value = reporte.fecha || hoy();
   $('inHoraIni').value = reporte.horaInicio || ''; $('inHoraFin').value = reporte.horaFin || '';
   const resp = config.responsable.personal, sel = new Set(reporte.personas || []);
@@ -109,15 +115,22 @@ function pantallaReporte() {
     const c = document.createElement('input'); c.type = 'checkbox'; c.value = p;
     if (p === resp) { c.checked = true; c.disabled = true; } else c.checked = sel.has(p);
     l.appendChild(c); l.appendChild(document.createTextNode(p)); $('listaPersonas').appendChild(l);
+    if (conRoles()) {
+      const t = document.createElement('input'); t.type = 'text'; t.className = 'rolpersona'; t.dataset.persona = p; t.placeholder = '¿Qué hizo ' + p.split(' ')[0] + ' en este mantenimiento?';
+      const rr = reporte.roles || {}; t.value = rr[p] !== undefined ? rr[p] : (p === resp ? ROL_RESP : '');
+      t.hidden = !c.checked; c.addEventListener('change', () => { t.hidden = !c.checked; });
+      $('listaPersonas').appendChild(t);
+    }
   });
   $('avisoResp').textContent = `${resp} aparece siempre como responsable del reporte.`;
   $('errReporte').textContent = ''; mostrar('pReporte');
 }
 function leerFormulario() {
   reporte = {
-    programa: $('selPrograma').value, anexo: String((PROGRAMA.find(x => String(x[0]) === $('selPrograma').value) || [])[2] || ''), numero: $('inNumero').value.trim(), fecha: $('inFecha').value,
+    programa: $('selPrograma').value, anexo: String((programaActual().find(x => String(x[0]) === $('selPrograma').value) || [])[2] || ''), numero: $('inNumero').value.trim(), fecha: $('inFecha').value,
     horaInicio: $('inHoraIni').value, horaFin: $('inHoraFin').value,
-    personas: [...$('listaPersonas').querySelectorAll('input:checked:not(:disabled)')].map(c => c.value)
+    personas: [...$('listaPersonas').querySelectorAll('input[type=checkbox]:checked:not(:disabled)')].map(c => c.value),
+    roles: Object.fromEntries([...$('listaPersonas').querySelectorAll('.rolpersona')].map(t => [t.dataset.persona, t.value.trim()]))
   };
   LS.set('rm_reporte', reporte);
 }
@@ -132,7 +145,7 @@ $('btnResumen').addEventListener('click', () => {
 });
 $('btnNuevo').addEventListener('click', async () => {
   if (!confirm('Se borrarán las fotos, lecturas y textos capturados de este reporte. ¿Empezar uno nuevo?')) return;
-  await Fotos.borrarTodas(); borrador = null; LS.del('rm_borrador'); reporte = { personas: reporte.personas || [] }; LS.set('rm_reporte', reporte); pantallaReporte();
+  await Fotos.borrarTodas(); borrador = null; LS.del('rm_borrador'); reporte = { personas: reporte.personas || [], roles: reporte.roles || {} }; LS.set('rm_reporte', reporte); pantallaReporte();
 });
 $('btnIrResumen').addEventListener('click', pantallaResumen);
 $('btnVolverDatos').addEventListener('click', pantallaReporte);
@@ -144,10 +157,10 @@ function encabezado() {
   const anexo = ANEXOS.find(a => String(a.n) === reporte.anexo);
   const otros = reporte.personas.filter(p => p !== r.personal);
   return {
-    fecha: reporte.fecha, numero: reporte.numero, titulo: anexo.titulo.toUpperCase(),
+    fecha: reporte.fecha, numero: reporte.numero, titulo: ((defActual() || {}).titulo || anexo.titulo).toUpperCase(),
     estacion_cabecera: est.cabecera, ciudad: est.ciudad,
     nombre: r.nombre_portada, colabora: otros.join(', ').toUpperCase(), telefono: r.telefono, correo: r.correo,
-    responsables: [r.personal, ...otros],
+    responsables: textoResponsables(),
     hora_inicio: reporte.horaInicio + ' Hrs.', hora_fin: reporte.horaFin + ' Hrs.',
     hi_raw: reporte.horaInicio, hf_raw: reporte.horaFin, formato_concl: (defActual() || {}).formatoConclusion || 'normal',
     titulo_corto: anexo.titulo.charAt(0).toLowerCase() + anexo.titulo.slice(1),
@@ -155,6 +168,15 @@ function encabezado() {
     autoriza_nombre: config.autoriza.nombre, autoriza_area: config.autoriza.area,
     vobo_nombre: config.vobo.nombre, vobo_area: config.vobo.area
   };
+}
+// Oficinas con actividad por persona (Tepic): "Nombre. Actividad."
+const conRoles = () => OFICINAS_ROLES.includes(sesion.estacionId);
+const ROL_RESP = 'Supervisión del mantenimiento y elaboración del reporte.';
+function textoResponsables() {
+  const r = config.responsable, todos = [r.personal, ...reporte.personas.filter(p => p !== r.personal)];
+  if (!conRoles()) return todos;
+  const roles = reporte.roles || {};
+  return todos.map(p => { const a = String(roles[p] === undefined && p === r.personal ? ROL_RESP : (roles[p] || '')).trim(); return a ? `${p}. ${a.replace(/\.+$/, '')}.` : p; });
 }
 function pantallaResumen() {
   const est = config.estaciones.find(e => e.id === sesion.estacionId), r = config.responsable;
@@ -164,7 +186,7 @@ function pantallaResumen() {
     ['Mantenimiento', anexo.titulo], ['No. de mantenimiento', reporte.numero], ['Fecha', `${d}/${m}/${y}`],
     ['Horario', `${reporte.horaInicio} a ${reporte.horaFin} Hrs.`], ['Oficina de Estación', est.nombre],
     ['Responsable del reporte', r.nombre_portada], ['Colabora', otros.length ? otros.join(', ') : '(nadie más)'],
-    ['Responsables del mantenimiento', [r.personal, ...otros].join(', ')],
+    ['Responsables del mantenimiento', textoResponsables().join(' | ')],
     ['Elaboró', `${r.nombre_firma} — Oficina de Estación ${est.nombre}`],
     ['Autorizó', `${config.autoriza.nombre} — ${config.autoriza.area}`], ['Visto bueno', `${config.vobo.nombre} — ${config.vobo.area}`]
   ];
@@ -193,7 +215,7 @@ $('btnGenerar').addEventListener('click', async () => {
     if (!resp.ok) throw new Error('No se encontró la plantilla');
     const salida = Motor.generar(await resp.arrayBuffer(), Object.assign({}, encabezado(), cuerpo));
     archivoListo = new Blob([salida], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    const tit = ANEXOS.find(x => String(x.n) === reporte.anexo).titulo.replace(/(^|\s)(\S)/g, (m, sp, ch) => sp + ch.toUpperCase());
+    const tit = tituloDe(reporte.anexo).replace(/(^|\s)(\S)/g, (m, sp, ch) => sp + ch.toUpperCase());
     nombreArchivo = `${reporte.numero} ${tit}.docx`.replace(/[\\/:*?"<>|]/g, '');
     $('estado').textContent = '¡Listo! El reporte se generó correctamente.'; $('btnDescargar').hidden = false;
   } catch (e) { console.error(e); $('estado').textContent = 'Algo falló: ' + (e.message || e); }

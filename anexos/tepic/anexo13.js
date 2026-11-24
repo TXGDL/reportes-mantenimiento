@@ -1,0 +1,13 @@
+// Tepic · Anexo 13: Mantenimiento a cables, conectores y rack (reporte 29 de Tepic)
+(function () {
+  const { ind, grp, def } = AX;
+  def(13, {
+    titulo: "MANTENIMIENTO A CABLES, CONECTORES Y RACK", formato: "tepic", sinExtra: true,
+    mat: ["Brocha", "Llaves", "Limpiador líquido", "Sopladora", "Extensión eléctrica", "Cinchos", "Pinza de corte"],
+    intro: ["Se requiere que los elementos de interconexión utilizados para la comunicación y operación entre los equipos se encuentren en buenas condiciones, como lo son cables de red, RF, video, audio y alimentación eléctrica, además de los conectores de estos, así como también, se requiere que el rack esté en buen estado y libre de polvo. Por lo que con ayuda de equipo de limpieza y cinchos se limpiará el rack y se acomoda todo el cableado existente."],
+    pasos: [
+    { t: "Limpieza y revisión de cables y conectores que se encuentran dentro del rack. Limpieza de rack y equipos", x: "Se procede a revisar y limpiar el cableado (RF, red y eléctrico) que se encuentra        dentro del rack. Dentro del rack tenemos 2 equipos de transmisión y un UPS, por lo que no se tiene una gran cantidad de cableado y conectores. Se limpia el rack por dentro y fuera, se limpia el exterior de los equipos dentro del rack.", b: [grp("g1", "Cables, conectores y rack antes del mantenimiento.", 2, 'Foto'), grp("g2", "Limpieza interior del rack con sopladora.", 6, 'Foto'), grp("g3", "Limpieza exterior del rack con líquido limpiador y franela de microfibra.", 6, 'Foto'), grp("g4", "Limpieza del interior y parte superior del rack con líquido limpiador, microfibra y brocha.", 6, 'Foto'), grp("g5", "Revisión y ajuste de conectores de RF y de peinado del cableado.", 6, 'Foto'), grp("g6", "Revisión de peinado y etiquetado del cableado dentro del rack.", 6, 'Foto'), grp("g7", "Revisión del aterrizamiento del rack.", 6, 'Foto'), ind("g8", [['1', 'Foto', "Rack después del mantenimiento."]])] }
+    ],
+    obs: "Mantenimiento de cables, conectores y rack realizado sin observaciones.", concl: "El objetivo del mantenimiento se cumplió al revisar que todo el cableado y conectores se encuentran en buen estado, es importante asegurar el estado de estos junto con el rack, ya que cualquier problema con un cable o conector puede causar una incidencia y que la señal de TV salga del aire. Es importante realizar el mantenimiento en la periodicidad para minimizar cualquier daño presente en los equipos, cableados o conectores que puedan provocar una incidencia mayor, al detectar una falla en alguno de los elementos, se puede programar una ventana de mantenimiento y así minimizar las incidencias."
+  }, 'tepic');
+})();

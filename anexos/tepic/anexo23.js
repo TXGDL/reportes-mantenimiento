@@ -1,0 +1,15 @@
+// Tepic · Anexo 23: Mantenimiento al sistema hidráulico y bombas (reporte 26 de Tepic)
+(function () {
+  const { ind, grp, def } = AX;
+  def(23, {
+    titulo: "MANTENIMIENTO AL SISTEMA HIDRÁULICO Y BOMBAS", formato: "tepic", sinExtra: true,
+    mat: ["Cloro", "Escalera", "Franela", "Escoba", "Cubetas", "Agua", "Perica", "Cepillo de alambre", "Sopladora", "Extensión eléctrica", "Brocha"],
+    intro: ["El mantenimiento al sistema hidráulico y bombas es de suma importancia para dar monitoreo al estado del agua, tinacos, cisternas y calentadores; y así tener una idea del estado general de dichos elementos en la estación. De igual forma vamos a tener en cuenta la calidad del agua con la que realizamos nuestras actividades, así como higiene personal. Para llevarlo a cabo se utiliza cubeta para sacar el agua, escoba y cloro para lavar tinacos, desarmador y llave perica para drenar agua de los calentadores y franela para limpiar por fuera los calentadores."],
+    pasos: [
+    { t: "Mantenimiento de tinacos", x: "Se realiza el lavado interno de los dos tinacos con los que se cuenta en la estación. Se saca el agua que queda al fondo con una cubeta, después se talla con una escoba, agua limpia y cloro; se enjuaga y se saca el agua con la que se lavó el interior. En la estación se cuenta con una cisterna para agua pluvial y dos cisternas para agua potable, cada una de 5000L de capacidad; no se pueden lavar debido a que se encuentran llenas.", b: [grp("g1", "Tinacos antes del mantenimiento.", 2, 'Foto'), grp("g2", "Lavado del tinaco 1 con escoba, franela, cloro y agua.", 4, 'Foto'), grp("g3", "Se lava el tinaco 2 con agua, cloro, escoba, franela y agua.", 4, 'Foto'), grp("g4", "Tinacos después del mantenimiento, se aplica un poco de cloro antes de llenar.", 4, 'Foto')] },
+    { t: "Mantenimiento de calentadores de agua", x: "Se realiza la limpieza exterior de los calentadores de agua (en la estación se cuenta con un calentador solar y otro eléctrico) y su posterior drenado del agua para extraer la acumulación de sarro en los depósitos.", b: [grp("g1", "Mantenimiento de calentador solar; se vacía el tanque, se retira sarro del tapón.", 4, 'Foto'), grp("g2", "Mantenimiento de calentador solar, limpieza exterior de tanque y tubos.", 4, 'Foto'), grp("g3", "Mantenimiento de calentador eléctrico, vaciado de agua y limpieza externa.", 4, 'Foto')] },
+    { t: "Revisión y limpieza de adicionales", o: true, x: "Se revisan los demás componentes del sistema hidráulico, como los son: tomas de agua, bombas, controlador de bombas, mezcladoras y llaves. Todos los componentes se encuentran en buenas condiciones y se limpian para mayor durabilidad de estos.", b: [grp("g1", "Cisternas de agua potable llenas, no es posible lavarlas. Se aplica cloro.", 4, 'Foto'), grp("g2", "Se limpia alrededor de las tapas de cisternas para evitar que caiga basura.", 6, 'Foto'), grp("g3", "Se limpian las bombas hidráulicas y el nicho.", 4, 'Foto'), grp("g4", "Revisión y limpieza de componentes del sistema hidráulico.", 6, 'Foto')] }
+    ],
+    obs: "Mantenimiento al sistema hidráulico y bombas realizado con observaciones.", concl: ""
+  }, 'tepic');
+})();

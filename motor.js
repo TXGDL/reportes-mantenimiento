@@ -21,10 +21,22 @@
     const h = Math.floor(m / 60), mm = m % 60;
     return `${h} ${h === 1 ? 'hora' : 'horas'} con ${dosd(mm)} minutos`;
   }
+  // Duración al estilo Tepic: "2 horas", "1 hora con 15 minutos", "45 minutos"
+  function duracionTepic(hi, hf) {
+    let m = (Number(hf.slice(0, 2)) * 60 + Number(hf.slice(3, 5))) - (Number(hi.slice(0, 2)) * 60 + Number(hi.slice(3, 5)));
+    if (m < 0) m += 1440;
+    const h = Math.floor(m / 60), mm = m % 60, H = h + (h === 1 ? ' hora' : ' horas'), M = mm + (mm === 1 ? ' minuto' : ' minutos');
+    return !h ? M : !mm ? H : `${H} con ${M}`;
+  }
   // Líneas de la sección CONCLUSIONES (cada estación tiene su formato)
   function conclusiones(d) {
     const L = [], obs = String(d.observaciones || '').trim(), cc = String(d.conclusion || '').trim();
     if (obs) L.push(obs);
+    if (d.formato_concl === 'tepic') {
+      if (cc) L.push(cc);
+      L.push(`El mantenimiento se llevó a cabo de las ${d.hi_raw} a las ${d.hf_raw} horas; con una duración de ${duracionTepic(d.hi_raw, d.hf_raw)}.`);
+      return L.join('\n');
+    }
     if (d.formato_concl === 'intervalo') {
       const t = String(d.titulo_corto || '').trim();
       L.push('Tiempo del ' + (t || 'mantenimiento'));

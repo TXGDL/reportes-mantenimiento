@@ -1,8 +1,10 @@
 // Catálogo de anexos del manual de mantenimiento preventivo. "disponible" = ya tiene su procedimiento armado en la app.
 const ANEXO_DEF = {};
 // Procedimientos por oficina de estación: cada oficina tiene sus propios formatos
-const ANEXO_DEF_EST = { guadalajara: ANEXO_DEF, guaymas: {} };
-const OFICINAS = [['guadalajara', 'Guadalajara'], ['guaymas', 'Guaymas']];
+const ANEXO_DEF_EST = { guadalajara: ANEXO_DEF, guaymas: {}, tepic: {} };
+const OFICINAS = [['guadalajara', 'Guadalajara'], ['guaymas', 'Guaymas'], ['tepic', 'Tepic']];
+// Oficinas donde cada persona escribe qué hizo (sección RESPONSABLES con actividad por persona)
+const OFICINAS_ROLES = ['tepic'];
 const hayDef = n => !!((ANEXO_DEF_EST[(typeof sesion !== 'undefined' && sesion.estacionId) || ''] || {})[n]);
 const ANEXOS = [
   { n: 10, titulo: 'Mantenimiento al transformador de aislamiento', disponible: true },
@@ -47,3 +49,9 @@ const PROGRAMA = [
   [40,'2do semestre',27],
   [41,'Servicio anual',20]
 ];
+
+// Programa propio de Tepic: [número, mes, anexo del manual]
+const PROGRAMA_EST = {
+  tepic: [[3,'Enero',26],[20,'Abril',28],[21,'Julio',18],[22,'Julio',19],[23,'Agosto',22],[25,'Agosto',14],[26,'Septiembre',23],[27,'Septiembre',24],[28,'Septiembre',12],[29,'Septiembre',13],[30,'Septiembre',21],[31,'Octubre',25],[32,'Octubre',10],[33,'Octubre',11],[34,'Octubre',15],[35,'Octubre',16],[36,'Octubre',17],[44,'Septiembre',20]]
+};
+const programaActual = () => PROGRAMA_EST[(typeof sesion !== 'undefined' && sesion.estacionId) || ''] || PROGRAMA;
